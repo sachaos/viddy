@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var Version string
+var version string
 
 func main() {
 	arguments, err := parseArguments(os.Args[1:])
@@ -16,7 +16,7 @@ func main() {
 		}
 
 		if arguments.isVersion {
-			fmt.Printf("viddy version: %s\n", Version)
+			fmt.Printf("viddy version: %s\n", version)
 			os.Exit(0)
 		}
 	}

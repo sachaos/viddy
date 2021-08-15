@@ -1,0 +1,42 @@
+before:
+  hooks:
+    - go mod download
+builds:
+- env:
+  - CGO_ENABLED=0
+  binary: viddy
+  goos:
+  - darwin
+  - linux
+  - windows
+  goarch:
+  - amd64
+  ldflags:
+  - -s -w -X github.com/sachaos/viddy.version={{.Version}}
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+brews:
+- tap:
+    owner: sachaos
+    name: homebrew-tap
+  folder: Formula
+  homepage: https://github.com/sachaos/viddy
+  description: Modern watch command. Viddy well, gopher. Viddy well.
+  skip_upload: auto
+  test: |
+    system "#{bin}/viddy, "--version"
