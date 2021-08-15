@@ -1,3 +1,7 @@
+<p align="center">
+<img src="./logo/image.png" width="200" alt="viddy" title="viddy" />
+</p>
+
 # Viddy
 
 Modern `watch` command.
