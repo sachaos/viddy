@@ -85,6 +85,8 @@ type Viddy struct {
 	duration  time.Duration
 	snapshots sync.Map
 
+	intervalView *tview.TextView
+	commandView  *tview.TextView
 	timeView     *tview.TextView
 	historyView  *tview.Table
 	historyCells map[int64]*tview.TableCell
@@ -105,6 +107,9 @@ type Viddy struct {
 	latestFinishedID int64
 	isTimemachine    bool
 	isSuspend        bool
+	isNoTitle        bool
+
+	isDebug bool
 }
 
 func ClockSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
@@ -207,9 +212,27 @@ func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyInter
 	}
 }
 
+func (v *Viddy) SetIsDebug(b bool) {
+	v.isDebug = b
+	v.arrange()
+}
+
+func (v *Viddy) SetIsNoTitle(b bool) {
+	v.isNoTitle = b
+	v.arrange()
+}
+
+func (v *Viddy) SetIsTimemachine(b bool) {
+	v.isTimemachine = b
+	if !v.isTimemachine {
+		v.setSelection(v.latestFinishedID)
+	}
+
+	v.arrange()
+}
+
 func (v *Viddy) println(a ...interface{}) {
 	fmt.Fprintln(v.logView, a...)
-	v.app.Draw()
 }
 
 func (v *Viddy) addSnapshot(s *Snapshot) {
@@ -256,6 +279,10 @@ func (v *Viddy) queueHandler() {
 					}
 				}
 			case id := <-v.queue:
+				if v.isSuspend {
+					return
+				}
+
 				s := v.getSnapShot(id)
 				c := tview.NewTableCell(strconv.FormatInt(s.id, 10))
 				v.historyCells[s.id] = c
@@ -319,6 +346,7 @@ func (v *Viddy) renderSnapshot(id int64) error {
 	}
 
 	if !s.completed {
+		v.bodyView.Clear()
 		return errors.New("not completed yet")
 	}
 
@@ -333,16 +361,48 @@ func (v *Viddy) UpdateStatusView() {
 
 func convertToOnOrOff(on bool) string {
 	if on {
-		return "[green]On [white]"
+		return "[green]ON [white]"
 	} else {
-		return "[red]Off[white]"
+		return "[red]OFF[white]"
 	}
+}
+
+func (v *Viddy) arrange() {
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+
+	if !v.isNoTitle {
+		flex.AddItem(
+			tview.NewFlex().SetDirection(tview.FlexColumn).
+				AddItem(v.intervalView, 10, 1, false).
+				AddItem(v.commandView, 0, 1, false).
+				AddItem(v.statusView, 0, 1, false).
+				AddItem(v.timeView, 20, 1, false),
+			3, 1, false)
+	}
+
+	middle := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(v.bodyView, 0, 1, false)
+
+	if v.isTimemachine {
+		middle.AddItem(v.historyView, 20, 1, true)
+	}
+
+	flex.AddItem(
+		middle,
+		0, 1, false)
+
+	if v.isDebug {
+		flex.AddItem(v.logView, 10, 1, false)
+	}
+
+	v.app.SetRoot(flex, true)
 }
 
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
-	b.SetTitle("body").SetBorder(true)
+	b.SetTitle("body")
+	v.bodyView = b
 
 	t := tview.NewTextView()
 	t.SetBorder(true).SetTitle("Time")
@@ -358,9 +418,7 @@ func (v *Viddy) Run() error {
 			v.renderSnapshot(id)
 		}
 	})
-
 	v.historyView = h
-	v.bodyView = b
 
 	var cmd []string
 	cmd = append(cmd, v.cmd)
@@ -369,10 +427,12 @@ func (v *Viddy) Run() error {
 	c := tview.NewTextView()
 	c.SetBorder(true).SetTitle("Command")
 	c.SetText(strings.Join(cmd, " "))
+	v.commandView = c
 
 	d := tview.NewTextView()
 	d.SetBorder(true).SetTitle("Every")
 	d.SetText(v.duration.String())
+	v.intervalView = d
 
 	s := tview.NewTextView()
 	s.SetBorder(true).SetTitle("Status")
@@ -388,9 +448,41 @@ func (v *Viddy) Run() error {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case ' ':
-			v.isTimemachine = !v.isTimemachine
+			v.SetIsTimemachine(!v.isTimemachine)
 		case 's':
 			v.isSuspend = !v.isSuspend
+		case 'J':
+			if !v.isTimemachine {
+				return event
+			}
+			count := v.historyView.GetRowCount()
+			selection, _ := v.historyView.GetSelection()
+
+			if selection+1 < count {
+				cell := v.historyView.GetCell(selection+1, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			}
+		case 'K':
+			if !v.isTimemachine {
+				return event
+			}
+			selection, _ := v.historyView.GetSelection()
+			if 0 <= selection-1 {
+				cell := v.historyView.GetCell(selection-1, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			}
+		case 't':
+			v.SetIsNoTitle(!v.isNoTitle)
+		case 'x':
+			v.SetIsDebug(!v.isDebug)
+		default:
+			v.bodyView.InputHandler()(event, nil)
 		}
 
 		v.UpdateStatusView()
@@ -399,27 +491,16 @@ func (v *Viddy) Run() error {
 	})
 	v.app = app
 
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(
-			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(d, 10, 1, false).
-				AddItem(c, 0, 1, false).
-				AddItem(s, 0, 1, false).
-				AddItem(t, 20, 1, false),
-			3, 1, false).
-		AddItem(
-			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(b, 0, 1, false).
-				AddItem(h, 20, 1, true),
-			0, 1, false).
-		AddItem(l, 10, 1, false)
-
 	go v.queueHandler()
 	go v.startRunner()
 
 	v.UpdateStatusView()
 
-	if err := app.SetRoot(flex, true).EnableMouse(true).Run(); err != nil {
+	app.EnableMouse(true)
+
+	v.arrange()
+
+	if err := app.Run(); err != nil {
 		return err
 	}
 
@@ -430,6 +511,8 @@ type Arguments struct {
 	interval  time.Duration
 	isPrecise bool
 	isActual  bool
+	isDebug   bool
+	isNoTitle bool
 
 	cmd  string
 	args []string
@@ -461,6 +544,10 @@ LOOP:
 			argument.isPrecise = true
 		case "-a", "--actual":
 			argument.isActual = true
+		case "--debug":
+			argument.isDebug = true
+		case "-t", "--no-title":
+			argument.isNoTitle = true
 		default:
 			args = append([]string{arg}, args...)
 			break LOOP
@@ -495,6 +582,9 @@ func main() {
 	}
 
 	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, mode)
+	v.isDebug = arguments.isDebug
+	v.isNoTitle = arguments.isNoTitle
+
 	if err := v.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
