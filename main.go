@@ -1,82 +1,18 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
-	"io"
 	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
-
-type Snapshot struct {
-	id int64
-
-	command string
-	args    []string
-
-	result []byte
-	start  time.Time
-	end    time.Time
-
-	completed bool
-	err       error
-
-	before *Snapshot
-	finish chan<- struct{}
-}
-
-func NewSnapshot(id int64, command string, args []string, before *Snapshot, finish chan<- struct{}) *Snapshot {
-	return &Snapshot{
-		id:      id,
-		command: command,
-		args:    args,
-
-		before: before,
-		finish: finish,
-	}
-}
-
-func (s *Snapshot) run(finishedQueue chan<- int64) error {
-	s.start = time.Now()
-	defer func() {
-		s.end = time.Now()
-	}()
-
-	var b bytes.Buffer
-
-	command := exec.Command(s.command, s.args...)
-	command.Stdout = &b
-
-	if err := command.Start(); err != nil {
-		return nil
-	}
-
-	go func() {
-		if err := command.Wait(); err != nil {
-			s.err = err
-		}
-
-		s.result = b.Bytes()
-		s.completed = true
-		finishedQueue <- s.id
-		close(s.finish)
-	}()
-
-	return nil
-}
-
-func (s *Snapshot) render(w io.Writer) error {
-	_, err := io.Copy(tview.ANSIWriter(w), bytes.NewReader(s.result))
-	return err
-}
 
 type Viddy struct {
 	cmd  string
@@ -108,6 +44,7 @@ type Viddy struct {
 	isTimemachine    bool
 	isSuspend        bool
 	isNoTitle        bool
+	isShowDiff       bool
 
 	isDebug bool
 }
@@ -352,11 +289,11 @@ func (v *Viddy) renderSnapshot(id int64) error {
 
 	v.println("render id:", id)
 	v.bodyView.Clear()
-	return s.render(v.bodyView)
+	return s.render(v.bodyView, v.isShowDiff)
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Timemachine: %s  Suspend: %s", convertToOnOrOff(v.isTimemachine), convertToOnOrOff(v.isSuspend)))
+	v.statusView.SetText(fmt.Sprintf("Timemachine: %s  Suspend: %s  Diff: %s", convertToOnOrOff(v.isTimemachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
 }
 
 func convertToOnOrOff(on bool) string {
@@ -477,6 +414,8 @@ func (v *Viddy) Run() error {
 					v.setSelection(id)
 				}
 			}
+		case 'd':
+			v.isShowDiff = !v.isShowDiff
 		case 't':
 			v.SetIsNoTitle(!v.isNoTitle)
 		case 'x':
@@ -512,6 +451,7 @@ type Arguments struct {
 	isPrecise bool
 	isActual  bool
 	isDebug   bool
+	isDiff    bool
 	isNoTitle bool
 
 	cmd  string
@@ -546,6 +486,8 @@ LOOP:
 			argument.isActual = true
 		case "--debug":
 			argument.isDebug = true
+		case "-d", "--differences":
+			argument.isDiff = true
 		case "-t", "--no-title":
 			argument.isNoTitle = true
 		default:
@@ -584,6 +526,7 @@ func main() {
 	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, mode)
 	v.isDebug = arguments.isDebug
 	v.isNoTitle = arguments.isNoTitle
+	v.isShowDiff = arguments.isDiff
 
 	if err := v.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
