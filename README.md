@@ -71,3 +71,9 @@ Download from [release page](https://github.com/sachaos/viddy/releases)
 
 "viddy" is Nadsat word meaning to see.
 If you don't know Nadsat, please viddy A Clockwork Orange.
+
+## Credits
+
+The gopher's logo of viddy is licensed under the Creative Commons 3.0 Attributions license.
+
+The original Go gopher was designed by [Renee French](https://reneefrench.blogspot.com/).
