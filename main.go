@@ -30,10 +30,11 @@ type Viddy struct {
 
 	idList []int64
 
-	bodyView   *tview.TextView
-	app        *tview.Application
-	logView    *tview.TextView
-	statusView *tview.TextView
+	bodyView    *tview.TextView
+	app         *tview.Application
+	logView     *tview.TextView
+	statusView  *tview.TextView
+	queryEditor *tview.InputField
 
 	snapshotQueue <-chan *Snapshot
 	queue         chan int64
@@ -45,6 +46,9 @@ type Viddy struct {
 	isSuspend        bool
 	isNoTitle        bool
 	isShowDiff       bool
+	isEditQuery      bool
+
+	query string
 
 	isDebug bool
 }
@@ -159,6 +163,12 @@ func (v *Viddy) SetIsNoTitle(b bool) {
 	v.arrange()
 }
 
+func (v *Viddy) SetIsShowDiff(b bool) {
+	v.isShowDiff = b
+	v.setSelection(v.currentID)
+	v.arrange()
+}
+
 func (v *Viddy) SetIsTimeMachine(b bool) {
 	v.isTimeMachine = b
 	if !v.isTimeMachine {
@@ -264,7 +274,7 @@ func (v *Viddy) setSelection(id int64) {
 
 	v.historyView.Select(i, 0)
 	v.currentID = id
-	v.timeView.SetText(strconv.FormatInt(id, 10))
+	v.timeView.SetText(time.Unix(id/1000000000, id%1000000000).String())
 }
 
 func (v *Viddy) getSnapShot(id int64) *Snapshot {
@@ -287,9 +297,8 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errors.New("not completed yet")
 	}
 
-	v.println("render id:", id)
 	v.bodyView.Clear()
-	return s.render(v.bodyView, v.isShowDiff)
+	return s.render(v.bodyView, v.isShowDiff, v.query)
 }
 
 func (v *Viddy) UpdateStatusView() {
@@ -312,16 +321,23 @@ func (v *Viddy) arrange() {
 			tview.NewFlex().SetDirection(tview.FlexColumn).
 				AddItem(v.intervalView, 10, 1, false).
 				AddItem(v.commandView, 0, 1, false).
-				AddItem(v.statusView, 0, 1, false).
-				AddItem(v.timeView, 20, 1, false),
+				AddItem(v.statusView, 45, 1, false).
+				AddItem(v.timeView, 21, 1, false),
 			3, 1, false)
 	}
 
+	body := tview.NewFlex().SetDirection(tview.FlexRow)
+	body.AddItem(v.bodyView, 0, 1, false)
+
+	if v.isEditQuery || v.query != "" {
+		body.AddItem(v.queryEditor, 1, 1, false)
+	}
+
 	middle := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(v.bodyView, 0, 1, false)
+		AddItem(body, 0, 1, false)
 
 	if v.isTimeMachine {
-		middle.AddItem(v.historyView, 20, 1, true)
+		middle.AddItem(v.historyView, 21, 1, true)
 	}
 
 	flex.AddItem(
@@ -339,6 +355,8 @@ func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
 	b.SetTitle("body")
+	b.SetRegions(true)
+	b.Highlight("s")
 	v.bodyView = b
 
 	t := tview.NewTextView()
@@ -381,8 +399,22 @@ func (v *Viddy) Run() error {
 	l.ScrollToEnd()
 	v.logView = l
 
+	q := tview.NewInputField().SetLabel("/").SetChangedFunc(func(text string) {
+		v.query = text
+	})
+	q.SetDoneFunc(func(key tcell.Key) {
+		v.isEditQuery = false
+		v.arrange()
+	})
+	v.queryEditor = q
+
 	app := tview.NewApplication()
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if v.isEditQuery {
+			v.queryEditor.InputHandler()(event, nil)
+			return event
+		}
+
 		switch event.Rune() {
 		case ' ':
 			v.SetIsTimeMachine(!v.isTimeMachine)
@@ -415,11 +447,14 @@ func (v *Viddy) Run() error {
 				}
 			}
 		case 'd':
-			v.isShowDiff = !v.isShowDiff
+			v.SetIsShowDiff(!v.isShowDiff)
 		case 't':
 			v.SetIsNoTitle(!v.isNoTitle)
 		case 'x':
 			v.SetIsDebug(!v.isDebug)
+		case '/':
+			v.isEditQuery = true
+			v.arrange()
 		default:
 			v.bodyView.InputHandler()(event, nil)
 		}

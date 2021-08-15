@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"io"
@@ -69,15 +70,22 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	return nil
 }
 
-func (s *Snapshot) render(w io.Writer, diff bool) error {
+func (s *Snapshot) render(w io.Writer, diff bool, query string) error {
 	var err error
+	var src string
 	if diff && s.before != nil && s.completed {
 		dmp := diffmatchpatch.New()
 		diffs := dmp.DiffMain(string(s.before.result), string(s.result), false)
-		_, err = io.Copy(tview.ANSIWriter(w), strings.NewReader(DiffPrettyText(diffs)))
+		src = DiffPrettyText(diffs)
 	} else {
-		_, err = io.Copy(tview.ANSIWriter(w), bytes.NewReader(s.result))
+		src = string(s.result)
 	}
+
+	if query != "" {
+		src = strings.Replace(src, query, fmt.Sprintf(`["s"]%s[""]`, query), -1)
+	}
+
+	_, err = io.Copy(tview.ANSIWriter(w), strings.NewReader(src))
 	return err
 }
 
