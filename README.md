@@ -10,7 +10,7 @@ Viddy well, gopher. Viddy well.
     * color output.
     * diff highlight.
 * Time machine mode. 😎
-    * Rewind scene like video.
+    * Rewind like video.
 * See output in pager.
 * Vim like keymaps.
 * Search text.
@@ -35,3 +35,7 @@ Viddy well, gopher. Viddy well.
 | Shift-J | (Time machine mode) Go to the past     |
 | Shift-K | (Time machine mode) Back to the future |
 
+## What is "viddy" ?
+
+"viddy" is Nadsat word meaning to see.
+If you don't know Nadsat, please viddy A Clockwork Orange.
