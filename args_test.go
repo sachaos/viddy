@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestName(t *testing.T) {
+func Test_parseArguments(t *testing.T) {
 	testCases := []struct{
 		name string
 		args []string
