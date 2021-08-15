@@ -1,7 +1,12 @@
 # Viddy
 
-Modern watch command.
+Modern `watch` command.
+
 Viddy well, gopher. Viddy well.
+
+## Example
+
+
 
 ## Features
 
@@ -11,11 +16,34 @@ Viddy well, gopher. Viddy well.
     * diff highlight.
 * Time machine mode. 😎
     * Rewind like video.
+    * Go to the past, and back to the future.
 * See output in pager.
 * Vim like keymaps.
 * Search text.
 * Suspend and restart execution.
 * Run command in precise intervals forcibly.
+
+## Install
+
+### Mac
+
+```shell
+brew install sachaos/tap/viddy
+```
+
+### Linux
+
+```shell
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.0/viddy_0.1.0_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+```
+
+### Go
+
+```shell
+go install github.com/sachaos/viddy
+```
+
+Download from [release page](https://github.com/sachaos/viddy/releases)
 
 ## Keymaps
 
