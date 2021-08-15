@@ -41,7 +41,7 @@ type Viddy struct {
 
 	currentID        int64
 	latestFinishedID int64
-	isTimemachine    bool
+	isTimeMachine    bool
 	isSuspend        bool
 	isNoTitle        bool
 	isShowDiff       bool
@@ -159,9 +159,9 @@ func (v *Viddy) SetIsNoTitle(b bool) {
 	v.arrange()
 }
 
-func (v *Viddy) SetIsTimemachine(b bool) {
-	v.isTimemachine = b
-	if !v.isTimemachine {
+func (v *Viddy) SetIsTimeMachine(b bool) {
+	v.isTimeMachine = b
+	if !v.isTimeMachine {
 		v.setSelection(v.latestFinishedID)
 	}
 
@@ -209,7 +209,7 @@ func (v *Viddy) queueHandler() {
 				ls := v.getSnapShot(v.latestFinishedID)
 				if ls == nil || s.start.After(ls.start) {
 					v.latestFinishedID = id
-					if !v.isTimemachine {
+					if !v.isTimeMachine {
 						v.setSelection(id)
 					} else {
 						v.setSelection(v.currentID)
@@ -233,7 +233,7 @@ func (v *Viddy) queueHandler() {
 				v.idList = append(v.idList, id)
 				v.Unlock()
 
-				if !v.isTimemachine {
+				if !v.isTimeMachine {
 					v.setSelection(v.latestFinishedID)
 				} else {
 					v.setSelection(v.currentID)
@@ -293,7 +293,7 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Timemachine: %s  Suspend: %s  Diff: %s", convertToOnOrOff(v.isTimemachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
+	v.statusView.SetText(fmt.Sprintf("Time Machine: %s  Suspend: %s  Diff: %s", convertToOnOrOff(v.isTimeMachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
 }
 
 func convertToOnOrOff(on bool) string {
@@ -320,7 +320,7 @@ func (v *Viddy) arrange() {
 	middle := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(v.bodyView, 0, 1, false)
 
-	if v.isTimemachine {
+	if v.isTimeMachine {
 		middle.AddItem(v.historyView, 20, 1, true)
 	}
 
@@ -385,11 +385,11 @@ func (v *Viddy) Run() error {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case ' ':
-			v.SetIsTimemachine(!v.isTimemachine)
+			v.SetIsTimeMachine(!v.isTimeMachine)
 		case 's':
 			v.isSuspend = !v.isSuspend
 		case 'J':
-			if !v.isTimemachine {
+			if !v.isTimeMachine {
 				return event
 			}
 			count := v.historyView.GetRowCount()
@@ -403,7 +403,7 @@ func (v *Viddy) Run() error {
 				}
 			}
 		case 'K':
-			if !v.isTimemachine {
+			if !v.isTimeMachine {
 				return event
 			}
 			selection, _ := v.historyView.GetSelection()
