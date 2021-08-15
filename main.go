@@ -22,7 +22,7 @@ type Snapshot struct {
 	command string
 	args    []string
 
-	result bytes.Buffer
+	result []byte
 	start  time.Time
 	end    time.Time
 
@@ -44,14 +44,16 @@ func NewSnapshot(id int64, command string, args []string, before *Snapshot, fini
 	}
 }
 
-func (s *Snapshot) run(finishedQueue chan <- int64) error {
+func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	s.start = time.Now()
 	defer func() {
 		s.end = time.Now()
 	}()
 
+	var b bytes.Buffer
+
 	command := exec.Command(s.command, s.args...)
-	command.Stdout = &s.result
+	command.Stdout = &b
 
 	if err := command.Start(); err != nil {
 		return nil
@@ -62,6 +64,7 @@ func (s *Snapshot) run(finishedQueue chan <- int64) error {
 			s.err = err
 		}
 
+		s.result = b.Bytes()
 		s.completed = true
 		finishedQueue <- s.id
 		close(s.finish)
@@ -71,7 +74,7 @@ func (s *Snapshot) run(finishedQueue chan <- int64) error {
 }
 
 func (s *Snapshot) render(w io.Writer) error {
-	_, err := io.Copy(tview.ANSIWriter(w), &s.result)
+	_, err := io.Copy(tview.ANSIWriter(w), bytes.NewReader(s.result))
 	return err
 }
 
@@ -80,7 +83,7 @@ type Viddy struct {
 	args []string
 
 	duration  time.Duration
-	snapshots map[int64]*Snapshot
+	snapshots sync.Map
 
 	timeView     *tview.TextView
 	historyView  *tview.Table
@@ -89,20 +92,22 @@ type Viddy struct {
 
 	idList []int64
 
-	bodyView    *tview.TextView
-	app         *tview.Application
-	logView     *tview.TextView
-	statusView  *tview.TextView
+	bodyView   *tview.TextView
+	app        *tview.Application
+	logView    *tview.TextView
+	statusView *tview.TextView
 
 	snapshotQueue <-chan *Snapshot
 	queue         chan int64
 	finishedQueue chan int64
 
+	currentID        int64
 	latestFinishedID int64
 	isTimemachine    bool
+	isSuspend        bool
 }
 
-func ClockSnapshot(name string, args []string, interval time.Duration) <- chan *Snapshot {
+func ClockSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -111,7 +116,7 @@ func ClockSnapshot(name string, args []string, interval time.Duration) <- chan *
 
 		for {
 			select {
-			case now := <- t:
+			case now := <-t:
 				finish := make(chan struct{})
 				id := now.UnixNano()
 				s = NewSnapshot(id, name, args, s, finish)
@@ -123,7 +128,7 @@ func ClockSnapshot(name string, args []string, interval time.Duration) <- chan *
 	return c
 }
 
-func PreciseSnapshot(name string, args []string, interval time.Duration) <- chan *Snapshot {
+func PreciseSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -133,8 +138,9 @@ func PreciseSnapshot(name string, args []string, interval time.Duration) <- chan
 			finish := make(chan struct{})
 			start := time.Now()
 			id := start.UnixNano()
-			s = NewSnapshot(id, name, args, s, finish)
-			c <- s
+			ns := NewSnapshot(id, name, args, s, finish)
+			s = ns
+			c <- ns
 			<-finish
 			pTime := time.Since(start)
 
@@ -149,7 +155,7 @@ func PreciseSnapshot(name string, args []string, interval time.Duration) <- chan
 	return c
 }
 
-func SequentialSnapshot(name string, args []string, interval time.Duration) <- chan *Snapshot {
+func SequentialSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -172,8 +178,8 @@ func SequentialSnapshot(name string, args []string, interval time.Duration) <- c
 type ViddyIntervalMode string
 
 var (
-	ViddyIntervalModeActual ViddyIntervalMode = "actual"
-	ViddyIntervalModePrecise ViddyIntervalMode = "precise"
+	ViddyIntervalModeActual     ViddyIntervalMode = "actual"
+	ViddyIntervalModePrecise    ViddyIntervalMode = "precise"
 	ViddyIntervalModeSequential ViddyIntervalMode = "sequential"
 )
 
@@ -189,12 +195,14 @@ func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyInter
 	}
 
 	return &Viddy{
-		duration: duration,
-		snapshots: map[int64]*Snapshot{},
+		cmd:          cmd,
+		args:         args,
+		duration:     duration,
+		snapshots:    sync.Map{},
 		historyCells: map[int64]*tview.TableCell{},
 
 		snapshotQueue: snapshotQueue,
-		queue: make(chan int64),
+		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
 	}
 }
@@ -205,7 +213,7 @@ func (v *Viddy) println(a ...interface{}) {
 }
 
 func (v *Viddy) addSnapshot(s *Snapshot) {
-	v.snapshots[s.id] = s
+	v.snapshots.Store(s.id, s)
 }
 
 func (v *Viddy) startRunner() {
@@ -222,11 +230,11 @@ func (v *Viddy) startRunner() {
 
 func (v *Viddy) queueHandler() {
 	for {
-		func () {
+		func() {
 			defer v.app.Draw()
 
 			select {
-			case id := <- v.finishedQueue:
+			case id := <-v.finishedQueue:
 				c, ok := v.historyCells[id]
 				if !ok {
 					return
@@ -241,9 +249,13 @@ func (v *Viddy) queueHandler() {
 				ls := v.getSnapShot(v.latestFinishedID)
 				if ls == nil || s.start.After(ls.start) {
 					v.latestFinishedID = id
-					v.setSelection(id)
+					if !v.isTimemachine {
+						v.setSelection(id)
+					} else {
+						v.setSelection(v.currentID)
+					}
 				}
-			case id := <- v.queue:
+			case id := <-v.queue:
 				s := v.getSnapShot(id)
 				c := tview.NewTableCell(strconv.FormatInt(s.id, 10))
 				v.historyCells[s.id] = c
@@ -257,13 +269,17 @@ func (v *Viddy) queueHandler() {
 				v.idList = append(v.idList, id)
 				v.Unlock()
 
-				v.setSelection(v.latestFinishedID)
+				if !v.isTimemachine {
+					v.setSelection(v.latestFinishedID)
+				} else {
+					v.setSelection(v.currentID)
+				}
 			}
 		}()
 	}
 }
 
-func (v *Viddy) setSelection(id int64)  {
+func (v *Viddy) setSelection(id int64) {
 	if id == 0 {
 		return
 	}
@@ -283,16 +299,17 @@ func (v *Viddy) setSelection(id int64)  {
 	v.RUnlock()
 
 	v.historyView.Select(i, 0)
+	v.currentID = id
 	v.timeView.SetText(strconv.FormatInt(id, 10))
 }
 
 func (v *Viddy) getSnapShot(id int64) *Snapshot {
-	s, ok := v.snapshots[id]
+	s, ok := v.snapshots.Load(id)
 	if !ok {
 		return nil
 	}
 
-	return s
+	return s.(*Snapshot)
 }
 
 func (v *Viddy) renderSnapshot(id int64) error {
@@ -311,14 +328,14 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Timemachine: %s", convertToOnOrOff(v.isTimemachine)))
+	v.statusView.SetText(fmt.Sprintf("Timemachine: %s  Suspend: %s", convertToOnOrOff(v.isTimemachine), convertToOnOrOff(v.isSuspend)))
 }
 
 func convertToOnOrOff(on bool) string {
 	if on {
 		return "[green]On [white]"
 	} else {
-		return "[red]Off [white]"
+		return "[red]Off[white]"
 	}
 }
 
@@ -372,6 +389,8 @@ func (v *Viddy) Run() error {
 		switch event.Rune() {
 		case ' ':
 			v.isTimemachine = !v.isTimemachine
+		case 's':
+			v.isSuspend = !v.isSuspend
 		}
 
 		v.UpdateStatusView()
@@ -397,6 +416,8 @@ func (v *Viddy) Run() error {
 
 	go v.queueHandler()
 	go v.startRunner()
+
+	v.UpdateStatusView()
 
 	if err := app.SetRoot(flex, true).EnableMouse(true).Run(); err != nil {
 		return err
