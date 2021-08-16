@@ -21,7 +21,10 @@ type Arguments struct {
 	args []string
 }
 
-var NoCommand = errors.New("command is required")
+var (
+	NoCommand = errors.New("command is required")
+	IntervalTooSmall = errors.New("interval too small")
+)
 
 func parseArguments(args []string) (*Arguments, error) {
 	argument := Arguments{
@@ -71,6 +74,10 @@ LOOP:
 
 	if len(args) == 0 {
 		return &argument, NoCommand
+	}
+
+	if argument.interval < 10 * time.Millisecond {
+		return nil, IntervalTooSmall
 	}
 
 	argument.cmd = args[0]

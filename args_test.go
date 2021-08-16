@@ -7,10 +7,11 @@ import (
 )
 
 func Test_parseArguments(t *testing.T) {
-	testCases := []struct{
-		name string
-		args []string
-		exp  *Arguments
+	testCases := []struct {
+		name   string
+		args   []string
+		exp    *Arguments
+		expErr error
 	}{
 		{
 			name: "-n 2s ls -l",
@@ -34,13 +35,19 @@ func Test_parseArguments(t *testing.T) {
 				args:        []string{"-l"},
 			},
 		},
+		{
+			name:   "invalid interval",
+			args:   []string{"-n", "1ms", "ls", "-l"},
+			exp:    nil,
+			expErr: IntervalTooSmall,
+		},
 	}
 
 	for _, tt := range testCases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			argument, err := parseArguments(tt.args)
-			assert.NoError(t, err)
+			assert.Equal(t, tt.expErr, err)
 			assert.Equal(t, tt.exp, argument)
 		})
 	}
