@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./logo/image.png" width="200" alt="viddy" title="viddy" />
+<img src="images/logo.png" width="200" alt="viddy" title="viddy" />
 </p>
 
 # Viddy
@@ -8,8 +8,11 @@ Modern `watch` command.
 
 Viddy well, gopher. Viddy well.
 
-## Example
+## Demo
 
+<p align="center">
+<img src="images/demo.gif" width="500" alt="viddy" title="viddy" />
+</p>
 
 
 ## Features
