@@ -72,7 +72,7 @@ Download from [release page](https://github.com/sachaos/viddy/releases)
 ## What is "viddy" ?
 
 "viddy" is Nadsat word meaning to see.
-If you don't know Nadsat, please viddy A Clockwork Orange.
+Nadsat is fictional argot of gangs in the violence movie "A Clockwork Orange".
 
 ## Credits
 

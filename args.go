@@ -8,14 +8,14 @@ import (
 )
 
 type Arguments struct {
-	interval  time.Duration
-	isPrecise bool
-	isActual  bool
-	isDebug   bool
-	isDiff    bool
-	isNoTitle bool
-	isHelp    bool
-	isVersion bool
+	interval    time.Duration
+	isPrecise   bool
+	isClockwork bool
+	isDebug     bool
+	isDiff      bool
+	isNoTitle   bool
+	isHelp      bool
+	isVersion   bool
 
 	cmd  string
 	args []string
@@ -51,8 +51,8 @@ LOOP:
 			}
 		case "-p", "--precise":
 			argument.isPrecise = true
-		case "-a", "--actual":
-			argument.isActual = true
+		case "-c", "--clockwork":
+			argument.isClockwork = true
 		case "--debug":
 			argument.isDebug = true
 		case "-d", "--differences":
@@ -90,7 +90,7 @@ Options:
   -d, --differences          highlight changes between updates
   -n, --interval <interval>  seconds to wait between updates (default "2s")
   -p, --precise              attempt run command in precise intervals
-  -a, --actual               run command in precise intervals forcibly
+  -c, --clockwork            run command in precise intervals forcibly
   -t, --no-title             turn off header
 
  -h, --help     display this help and exit

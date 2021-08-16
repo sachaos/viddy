@@ -30,8 +30,8 @@ func main() {
 	switch {
 	case arguments.isPrecise:
 		mode = ViddyIntervalModePrecise
-	case arguments.isActual:
-		mode = ViddyIntervalModeActual
+	case arguments.isClockwork:
+		mode = ViddyIntervalModeClockwork
 	default:
 		mode = ViddyIntervalModeSequential
 	}

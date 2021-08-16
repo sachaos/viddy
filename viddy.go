@@ -54,7 +54,7 @@ type Viddy struct {
 type ViddyIntervalMode string
 
 var (
-	ViddyIntervalModeActual     ViddyIntervalMode = "actual"
+	ViddyIntervalModeClockwork  ViddyIntervalMode = "clockwork"
 	ViddyIntervalModePrecise    ViddyIntervalMode = "precise"
 	ViddyIntervalModeSequential ViddyIntervalMode = "sequential"
 )
@@ -62,7 +62,7 @@ var (
 func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyIntervalMode) *Viddy {
 	var snapshotQueue <-chan *Snapshot
 	switch mode {
-	case ViddyIntervalModeActual:
+	case ViddyIntervalModeClockwork:
 		snapshotQueue = ClockSnapshot(cmd, args, duration)
 	case ViddyIntervalModeSequential:
 		snapshotQueue = SequentialSnapshot(cmd, args, duration)
