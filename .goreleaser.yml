@@ -12,7 +12,7 @@ builds:
   goarch:
   - amd64
   ldflags:
-  - -s -w -X github.com/sachaos/viddy.version={{.Version}}
+  - -s -w -X main.version={{.Version}}
 archives:
 - replacements:
     darwin: Darwin
