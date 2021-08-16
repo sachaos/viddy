@@ -36,7 +36,7 @@ brews:
     name: homebrew-tap
   folder: Formula
   homepage: https://github.com/sachaos/viddy
-  description: Modern watch command. Viddy well, gopher. Viddy well.
+  description: Modern waach command. Viddy well, gopher. Viddy well.
   skip_upload: auto
   test: |
-    system "#{bin}/viddy, "--version"
+    system "#{bin}/viddy", "--version"
