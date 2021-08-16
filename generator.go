@@ -8,12 +8,13 @@ func ClockSnapshot(name string, args []string, interval time.Duration) <-chan *S
 	go func() {
 		var s *Snapshot
 		t := time.Tick(interval)
+		begin := time.Now().UnixNano()
 
 		for {
 			select {
 			case now := <-t:
 				finish := make(chan struct{})
-				id := now.UnixNano()
+				id := (now.UnixNano() - begin) / int64(time.Millisecond)
 				s = NewSnapshot(id, name, args, s, finish)
 				c <- s
 			}
@@ -28,11 +29,12 @@ func PreciseSnapshot(name string, args []string, interval time.Duration) <-chan 
 
 	go func() {
 		var s *Snapshot
+		begin := time.Now().UnixNano()
 
 		for {
 			finish := make(chan struct{})
 			start := time.Now()
-			id := start.UnixNano()
+			id := (start.UnixNano() - begin) / int64(time.Millisecond)
 			ns := NewSnapshot(id, name, args, s, finish)
 			s = ns
 			c <- ns
@@ -55,10 +57,11 @@ func SequentialSnapshot(name string, args []string, interval time.Duration) <-ch
 
 	go func() {
 		var s *Snapshot
+		begin := time.Now().UnixNano()
 
 		for {
 			finish := make(chan struct{})
-			id := time.Now().UnixNano()
+			id := (time.Now().UnixNano() - begin) / int64(time.Millisecond)
 			s = NewSnapshot(id, name, args, s, finish)
 			c <- s
 			<-finish

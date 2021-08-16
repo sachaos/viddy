@@ -80,6 +80,9 @@ func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyInter
 		snapshotQueue: snapshotQueue,
 		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
+
+		currentID:     -1,
+		latestFinishedID: -1,
 	}
 }
 
@@ -184,7 +187,7 @@ func (v *Viddy) queueHandler() {
 }
 
 func (v *Viddy) setSelection(id int64) {
-	if id == 0 {
+	if id == -1 {
 		return
 	}
 
@@ -393,6 +396,8 @@ func (v *Viddy) Run() error {
 				}
 			} else {
 				cell := v.historyView.GetCell(count - 1, 0)
+				v.println("count:", count)
+				v.println(fmt.Sprintf("cell.Text: '%s'", cell.Text))
 				id, err := strconv.ParseInt(cell.Text, 10, 64)
 				if err == nil {
 					v.setSelection(id)
