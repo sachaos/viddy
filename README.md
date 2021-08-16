@@ -1,8 +1,8 @@
+# Viddy
+
 <p align="center">
 <img src="images/logo.png" width="200" alt="viddy" title="viddy" />
 </p>
-
-# Viddy
 
 Modern `watch` command.
 
@@ -11,7 +11,7 @@ Viddy well, gopher. Viddy well.
 ## Demo
 
 <p align="center">
-<img src="images/demo.gif" width="500" alt="viddy" title="viddy" />
+<img src="images/demo.gif" width="100%" alt="viddy" title="viddy" />
 </p>
 
 
