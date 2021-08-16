@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -42,7 +43,11 @@ LOOP:
 			args = args[1:]
 			argument.interval, err = time.ParseDuration(interval)
 			if err != nil {
-				return nil, err
+				seconds, err := strconv.Atoi(interval)
+				if err != nil {
+					return nil, err
+				}
+				argument.interval = time.Duration(seconds) * time.Second
 			}
 		case "-p", "--precise":
 			argument.isPrecise = true

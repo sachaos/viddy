@@ -23,6 +23,17 @@ func Test_parseArguments(t *testing.T) {
 				args:      []string{"-l"},
 			},
 		},
+		{
+			name: "-n 1 ls -l",
+			args: []string{"-n", "1", "ls", "-l"},
+			exp: &Arguments{
+				interval:  1 * time.Second,
+				isPrecise: false,
+				isActual:  false,
+				cmd:       "ls",
+				args:      []string{"-l"},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
