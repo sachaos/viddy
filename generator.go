@@ -2,13 +2,12 @@ package main
 
 import "time"
 
-func ClockSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
+func ClockSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
 		var s *Snapshot
 		t := time.Tick(interval)
-		begin := time.Now().UnixNano()
 
 		for {
 			select {
@@ -24,7 +23,7 @@ func ClockSnapshot(name string, args []string, interval time.Duration) <-chan *S
 	return c
 }
 
-func PreciseSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
+func PreciseSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -52,7 +51,7 @@ func PreciseSnapshot(name string, args []string, interval time.Duration) <-chan 
 	return c
 }
 
-func SequentialSnapshot(name string, args []string, interval time.Duration) <-chan *Snapshot {
+func SequentialSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {

@@ -12,7 +12,16 @@ import (
 	"time"
 )
 
+type HistoryRow struct {
+	id *tview.TableCell
+
+	addition *tview.TableCell
+	deletion *tview.TableCell
+}
+
 type Viddy struct {
+	begin int64
+
 	cmd  string
 	args []string
 
@@ -23,7 +32,7 @@ type Viddy struct {
 	commandView  *tview.TextView
 	timeView     *tview.TextView
 	historyView  *tview.Table
-	historyCells map[int64]*tview.TableCell
+	historyRows  map[int64]*HistoryRow
 	sync.RWMutex
 
 	idList []int64
@@ -37,6 +46,7 @@ type Viddy struct {
 	snapshotQueue <-chan *Snapshot
 	queue         chan int64
 	finishedQueue chan int64
+	diffQueue     chan int64
 
 	currentID        int64
 	latestFinishedID int64
@@ -60,28 +70,32 @@ var (
 )
 
 func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyIntervalMode) *Viddy {
+	begin := time.Now().UnixNano()
+
 	var snapshotQueue <-chan *Snapshot
 	switch mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(cmd, args, duration)
+		snapshotQueue = ClockSnapshot(begin, cmd, args, duration)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(cmd, args, duration)
+		snapshotQueue = SequentialSnapshot(begin, cmd, args, duration)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(cmd, args, duration)
+		snapshotQueue = PreciseSnapshot(begin, cmd, args, duration)
 	}
 
 	return &Viddy{
-		cmd:          cmd,
-		args:         args,
-		duration:     duration,
-		snapshots:    sync.Map{},
-		historyCells: map[int64]*tview.TableCell{},
+		begin:       begin,
+		cmd:         cmd,
+		args:        args,
+		duration:    duration,
+		snapshots:   sync.Map{},
+		historyRows: map[int64]*HistoryRow{},
 
 		snapshotQueue: snapshotQueue,
 		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
+		diffQueue: 	   make(chan int64, 100),
 
-		currentID:     -1,
+		currentID:        -1,
 		latestFinishedID: -1,
 	}
 }
@@ -131,6 +145,37 @@ func (v *Viddy) startRunner() {
 	}
 }
 
+func (v *Viddy) diffQueueHandler() {
+	for {
+		func() {
+			defer v.app.Draw()
+			select {
+			case id := <-v.diffQueue:
+				s := v.getSnapShot(id)
+				if s == nil {
+					return
+				}
+
+				err := s.compareFromBefore()
+				if err != nil {
+					time.Sleep(1 * time.Second)
+					v.diffQueue <- id
+					return
+				}
+
+				r, ok := v.historyRows[id]
+				if !ok {
+					return
+				}
+				r.addition.SetText("+"+strconv.Itoa(s.diffAdditionCount))
+				r.deletion.SetText("-"+strconv.Itoa(s.diffDeletionCount))
+
+				return
+			}
+		}()
+	}
+}
+
 func (v *Viddy) queueHandler() {
 	for {
 		func() {
@@ -138,16 +183,18 @@ func (v *Viddy) queueHandler() {
 
 			select {
 			case id := <-v.finishedQueue:
-				c, ok := v.historyCells[id]
+				r, ok := v.historyRows[id]
 				if !ok {
 					return
 				}
-				c.SetTextColor(tcell.ColorWhite)
+				r.id.SetTextColor(tcell.ColorWhite)
 
 				s := v.getSnapShot(id)
 				if s == nil {
 					return
 				}
+
+				v.diffQueue <- s.id
 
 				ls := v.getSnapShot(v.latestFinishedID)
 				if ls == nil || s.start.After(ls.start) {
@@ -164,13 +211,20 @@ func (v *Viddy) queueHandler() {
 				}
 
 				s := v.getSnapShot(id)
-				c := tview.NewTableCell(strconv.FormatInt(s.id, 10))
-				v.historyCells[s.id] = c
+				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tcell.ColorDarkGray)
+				additionCell := tview.NewTableCell("+0").SetTextColor(tcell.ColorGreen)
+				deletionCell := tview.NewTableCell("-0").SetTextColor(tcell.ColorRed)
 
-				c.SetTextColor(tcell.ColorDarkGray)
+				v.historyRows[s.id] = &HistoryRow{
+					id:       idCell,
+					addition: additionCell,
+					deletion: deletionCell,
+				}
 
 				v.historyView.InsertRow(0)
-				v.historyView.SetCell(0, 0, c)
+				v.historyView.SetCell(0, 0, idCell)
+				v.historyView.SetCell(0, 1, additionCell)
+				v.historyView.SetCell(0, 2, deletionCell)
 
 				v.Lock()
 				v.idList = append(v.idList, id)
@@ -207,7 +261,8 @@ func (v *Viddy) setSelection(id int64) {
 
 	v.historyView.Select(i, 0)
 	v.currentID = id
-	v.timeView.SetText(time.Unix(id/1000000000, id%1000000000).String())
+	unix := v.begin + id * int64(time.Millisecond)
+	v.timeView.SetText(time.Unix(unix / int64(time.Second), unix % int64(time.Second)).String())
 }
 
 func (v *Viddy) getSnapShot(id int64) *Snapshot {
@@ -395,7 +450,7 @@ func (v *Viddy) Run() error {
 					v.setSelection(id)
 				}
 			} else {
-				cell := v.historyView.GetCell(count - 1, 0)
+				cell := v.historyView.GetCell(count-1, 0)
 				v.println("count:", count)
 				v.println(fmt.Sprintf("cell.Text: '%s'", cell.Text))
 				id, err := strconv.ParseInt(cell.Text, 10, 64)
@@ -445,6 +500,7 @@ func (v *Viddy) Run() error {
 	})
 	v.app = app
 
+	go v.diffQueueHandler()
 	go v.queueHandler()
 	go v.startRunner()
 

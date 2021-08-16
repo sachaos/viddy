@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/rivo/tview"
 )
+
+var dmp = diffmatchpatch.New()
 
 type Snapshot struct {
 	id int64
@@ -26,6 +29,12 @@ type Snapshot struct {
 	completed bool
 	err       error
 
+	diffPrepared bool
+	diff         []diffmatchpatch.Diff
+
+	diffAdditionCount int
+	diffDeletionCount int
+
 	before *Snapshot
 	finish chan<- struct{}
 }
@@ -39,6 +48,36 @@ func NewSnapshot(id int64, command string, args []string, before *Snapshot, fini
 		before: before,
 		finish: finish,
 	}
+}
+
+func (s *Snapshot) compareFromBefore() error {
+	if s.before != nil && !s.before.completed {
+		return errors.New("not completed")
+	}
+
+	var beforeResult string
+	if s.before == nil {
+		beforeResult = ""
+	} else {
+		beforeResult = string(s.before.result)
+	}
+
+	s.diff = dmp.DiffMain(beforeResult, string(s.result), false)
+	addition := 0
+	deletion := 0
+	for _, diff := range s.diff {
+		switch diff.Type {
+		case diffmatchpatch.DiffInsert:
+			addition += len(diff.Text)
+		case diffmatchpatch.DiffDelete:
+			deletion += len(diff.Text)
+		}
+	}
+	s.diffAdditionCount = addition
+	s.diffDeletionCount = deletion
+	s.diffPrepared = true
+
+	return nil
 }
 
 func (s *Snapshot) run(finishedQueue chan<- int64) error {
@@ -73,10 +112,9 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 func (s *Snapshot) render(w io.Writer, diff bool, query string) error {
 	var err error
 	var src string
-	if diff && s.before != nil && s.completed {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(string(s.before.result), string(s.result), false)
-		src = DiffPrettyText(diffs)
+
+	if diff && s.diffPrepared {
+		src = DiffPrettyText(s.diff)
 	} else {
 		src = string(s.result)
 	}
