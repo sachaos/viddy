@@ -9,14 +9,11 @@ func ClockSnapshot(begin int64, name string, args []string, interval time.Durati
 		var s *Snapshot
 		t := time.Tick(interval)
 
-		for {
-			select {
-			case now := <-t:
-				finish := make(chan struct{})
-				id := (now.UnixNano() - begin) / int64(time.Millisecond)
-				s = NewSnapshot(id, name, args, s, finish)
-				c <- s
-			}
+		for now := range t {
+			finish := make(chan struct{})
+			id := (now.UnixNano() - begin) / int64(time.Millisecond)
+			s = NewSnapshot(id, name, args, s, finish)
+			c <- s
 		}
 	}()
 

@@ -93,7 +93,7 @@ func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyInter
 		snapshotQueue: snapshotQueue,
 		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
-		diffQueue: 	   make(chan int64, 100),
+		diffQueue:     make(chan int64, 100),
 
 		currentID:        -1,
 		latestFinishedID: -1,
@@ -134,14 +134,11 @@ func (v *Viddy) addSnapshot(s *Snapshot) {
 }
 
 func (v *Viddy) startRunner() {
-	for {
-		select {
-		case s := <-v.snapshotQueue:
-			v.addSnapshot(s)
-			v.queue <- s.id
+	for s := range v.snapshotQueue {
+		v.addSnapshot(s)
+		v.queue <- s.id
 
-			s.run(v.finishedQueue)
-		}
+		_ = s.run(v.finishedQueue)
 	}
 }
 
@@ -149,29 +146,26 @@ func (v *Viddy) diffQueueHandler() {
 	for {
 		func() {
 			defer v.app.Draw()
-			select {
-			case id := <-v.diffQueue:
-				s := v.getSnapShot(id)
-				if s == nil {
-					return
-				}
 
-				err := s.compareFromBefore()
-				if err != nil {
-					time.Sleep(1 * time.Second)
-					v.diffQueue <- id
-					return
-				}
-
-				r, ok := v.historyRows[id]
-				if !ok {
-					return
-				}
-				r.addition.SetText("+"+strconv.Itoa(s.diffAdditionCount))
-				r.deletion.SetText("-"+strconv.Itoa(s.diffDeletionCount))
-
+			id := <-v.diffQueue
+			s := v.getSnapShot(id)
+			if s == nil {
 				return
 			}
+
+			err := s.compareFromBefore()
+			if err != nil {
+				time.Sleep(1 * time.Second)
+				v.diffQueue <- id
+				return
+			}
+
+			r, ok := v.historyRows[id]
+			if !ok {
+				return
+			}
+			r.addition.SetText("+" + strconv.Itoa(s.diffAdditionCount))
+			r.deletion.SetText("-" + strconv.Itoa(s.diffDeletionCount))
 		}()
 	}
 }
@@ -261,8 +255,8 @@ func (v *Viddy) setSelection(id int64) {
 
 	v.historyView.Select(i, 0)
 	v.currentID = id
-	unix := v.begin + id * int64(time.Millisecond)
-	v.timeView.SetText(time.Unix(unix / int64(time.Second), unix % int64(time.Second)).String())
+	unix := v.begin + id*int64(time.Millisecond)
+	v.timeView.SetText(time.Unix(unix/int64(time.Second), unix%int64(time.Second)).String())
 }
 
 func (v *Viddy) getSnapShot(id int64) *Snapshot {
@@ -358,7 +352,7 @@ func (v *Viddy) Run() error {
 		c := h.GetCell(row, column)
 		id, err := strconv.ParseInt(c.Text, 10, 64)
 		if err == nil {
-			v.renderSnapshot(id)
+			_ = v.renderSnapshot(id)
 		}
 	})
 	v.historyView = h
