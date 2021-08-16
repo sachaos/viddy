@@ -329,7 +329,9 @@ func (v *Viddy) Run() error {
 	l.ScrollToEnd()
 	v.logView = l
 
-	q := tview.NewInputField().SetLabel("/").SetChangedFunc(func(text string) {
+	q := tview.NewInputField().SetLabel("/")
+	q.SetFieldBackgroundColor(tcell.ColorBlack)
+	q.SetChangedFunc(func(text string) {
 		v.query = text
 	})
 	q.SetDoneFunc(func(key tcell.Key) {
@@ -376,6 +378,45 @@ func (v *Viddy) Run() error {
 					v.setSelection(id)
 				}
 			}
+		case 'F':
+			if !v.isTimeMachine {
+				return event
+			}
+			count := v.historyView.GetRowCount()
+			selection, _ := v.historyView.GetSelection()
+
+			if selection+10 < count {
+				cell := v.historyView.GetCell(selection+10, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			} else {
+				cell := v.historyView.GetCell(count - 1, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			}
+
+		case 'B':
+			if !v.isTimeMachine {
+				return event
+			}
+			selection, _ := v.historyView.GetSelection()
+			if 0 <= selection-10 {
+				cell := v.historyView.GetCell(selection-10, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			} else {
+				cell := v.historyView.GetCell(0, 0)
+				id, err := strconv.ParseInt(cell.Text, 10, 64)
+				if err == nil {
+					v.setSelection(id)
+				}
+			}
 		case 'd':
 			v.SetIsShowDiff(!v.isShowDiff)
 		case 't':
@@ -383,6 +424,10 @@ func (v *Viddy) Run() error {
 		case 'x':
 			v.SetIsDebug(!v.isDebug)
 		case '/':
+			if v.query != "" {
+				v.query = ""
+				v.queryEditor.SetText("")
+			}
 			v.isEditQuery = true
 			v.arrange()
 		default:
