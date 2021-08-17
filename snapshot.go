@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/rivo/tview"
 )
@@ -62,7 +63,7 @@ func (s *Snapshot) compareFromBefore() error {
 		beforeResult = string(s.before.result)
 	}
 
-	s.diff = dmp.DiffMain(beforeResult, string(s.result), false)
+	s.diff = dmp.DiffCleanupSemantic(dmp.DiffMain(beforeResult, string(s.result), false))
 	addition := 0
 	deletion := 0
 	for _, diff := range s.diff {
@@ -144,7 +145,13 @@ func DiffPrettyText(diffs []diffmatchpatch.Diff) string {
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			_, _ = buff.WriteString(color.New(color.BgGreen).Sprintf(text))
+			for _, c := range text {
+				if unicode.IsSpace(c) {
+					_, _ = buff.WriteRune(c)
+				} else {
+					_, _ = buff.WriteString(color.New(color.BgGreen).Sprintf(string(c)))
+				}
+			}
 		case diffmatchpatch.DiffEqual:
 			_, _ = buff.WriteString(text)
 		}
