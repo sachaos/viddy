@@ -109,12 +109,21 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	return nil
 }
 
-func (s *Snapshot) render(w io.Writer, diff bool, query string) error {
+func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 	var err error
 	var src string
 
-	if diff && s.diffPrepared {
-		src = DiffPrettyText(s.diff)
+	if isShowDiff {
+		if s.diffPrepared {
+			src = DiffPrettyText(s.diff)
+		} else {
+			err := s.compareFromBefore()
+			if err != nil {
+				src = string(s.result)
+			} else {
+				src = DiffPrettyText(s.diff)
+			}
+		}
 	} else {
 		src = string(s.result)
 	}
