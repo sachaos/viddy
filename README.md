@@ -47,7 +47,7 @@ wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.0/v
 ### Go
 
 ```shell
-go install github.com/sachaos/viddy
+go get github.com/sachaos/viddy
 ```
 
 Download from [release page](https://github.com/sachaos/viddy/releases)
