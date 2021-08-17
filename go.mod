@@ -1,4 +1,4 @@
-module github.com/sachaos/sandbox/viddy
+module github.com/sachaos/viddy
 
 go 1.16
 
