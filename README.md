@@ -41,13 +41,13 @@ brew install sachaos/tap/viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.0/viddy_0.1.0_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.2/viddy_0.1.2_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 ### Go
 
 ```shell
-go get github.com/sachaos/viddy
+go get github.com/sachaos/viddy@v0.1.2
 ```
 
 Download from [release page](https://github.com/sachaos/viddy/releases)
