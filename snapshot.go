@@ -89,7 +89,10 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 
 	var b bytes.Buffer
 
-	command := exec.Command(s.command, s.args...)
+	commands := []string{s.command}
+	commands = append(commands, s.args...)
+
+	command := exec.Command("sh", "-c", strings.Join(commands, " "))
 	command.Stdout = &b
 
 	if err := command.Start(); err != nil {
