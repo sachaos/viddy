@@ -18,7 +18,7 @@ Viddy well, gopher. Viddy well.
 ## Features
 
 * Basic features of original watch command.
-    * Execute command preiodically, and display the result.
+    * Execute command periodically, and display the result.
     * color output.
     * diff highlight.
 * Time machine mode. 😎
@@ -47,7 +47,7 @@ wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.4/v
 ### Go
 
 ```shell
-go get github.com/sachaos/viddy@v0.1.4
+go install github.com/sachaos/viddy@latest
 ```
 
 Download from [release page](https://github.com/sachaos/viddy/releases)
