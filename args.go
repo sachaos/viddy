@@ -22,7 +22,7 @@ type Arguments struct {
 }
 
 var (
-	NoCommand = errors.New("command is required")
+	NoCommand        = errors.New("command is required")
 	IntervalTooSmall = errors.New("interval too small")
 )
 
@@ -76,7 +76,7 @@ LOOP:
 		return &argument, NoCommand
 	}
 
-	if argument.interval < 10 * time.Millisecond {
+	if argument.interval < 10*time.Millisecond {
 		return nil, IntervalTooSmall
 	}
 
