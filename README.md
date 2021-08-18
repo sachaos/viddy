@@ -34,8 +34,16 @@ Viddy well, gopher. Viddy well.
 
 ### Mac
 
+...via [Homebrew](https://brew.sh):
+
 ```shell
 brew install sachaos/tap/viddy
+```
+
+...via [MacPorts](https://www.macports.org):
+
+```shell
+sudo port install viddy
 ```
 
 ### Linux
