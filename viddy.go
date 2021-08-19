@@ -58,7 +58,8 @@ type Viddy struct {
 
 	query string
 
-	isDebug bool
+	isDebug     bool
+	showLogView bool
 }
 
 type ViddyIntervalMode string
@@ -100,8 +101,8 @@ func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyInter
 	}
 }
 
-func (v *Viddy) SetIsDebug(b bool) {
-	v.isDebug = b
+func (v *Viddy) ShowLogView(b bool) {
+	v.showLogView = b
 	v.arrange()
 }
 
@@ -326,7 +327,7 @@ func (v *Viddy) arrange() {
 		middle,
 		0, 1, false)
 
-	if v.isDebug {
+	if v.showLogView {
 		flex.AddItem(v.logView, 10, 1, false)
 	}
 
@@ -476,7 +477,9 @@ func (v *Viddy) Run() error {
 		case 't':
 			v.SetIsNoTitle(!v.isNoTitle)
 		case 'x':
-			v.SetIsDebug(!v.isDebug)
+			if v.isDebug {
+				v.ShowLogView(!v.showLogView)
+			}
 		case '/':
 			if v.query != "" {
 				v.query = ""
