@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"io"
+	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/fatih/color"
+	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/rivo/tview"
 )
@@ -92,7 +95,12 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	commands := []string{s.command}
 	commands = append(commands, s.args...)
 
-	command := exec.Command("sh", "-c", strings.Join(commands, " "))
+	var command *exec.Cmd
+	if runtime.GOOS == "windows" {
+		command = exec.Command(os.Getenv("COMSPEC"), "/c", strings.Join(commands, " "))
+	} else {
+		command = exec.Command("sh", "-c", strings.Join(commands, " "))
+	}
 	command.Stdout = &b
 
 	if err := command.Start(); err != nil {
