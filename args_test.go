@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_parseArguments(t *testing.T) {
@@ -46,7 +47,7 @@ func Test_parseArguments(t *testing.T) {
 	for _, tt := range testCases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			argument, err := parseArguments(tt.args)
+			argument, _, err := parseArguments(tt.args)
 			assert.Equal(t, tt.expErr, err)
 			assert.Equal(t, tt.exp, argument)
 		})

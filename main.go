@@ -8,7 +8,7 @@ import (
 var version string
 
 func main() {
-	arguments, err := parseArguments(os.Args[1:])
+	arguments, help, err := parseArguments(os.Args[1:])
 	if err == NoCommand {
 		if arguments.isHelp {
 			help()

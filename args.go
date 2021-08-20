@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"strconv"
+	"strings"
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 type Arguments struct {
@@ -26,80 +27,44 @@ var (
 	IntervalTooSmall = errors.New("interval too small")
 )
 
-func parseArguments(args []string) (*Arguments, error) {
-	argument := Arguments{
-		interval: 2 * time.Second,
-	}
-	var err error
+func parseArguments(args []string) (*Arguments, func(), error) {
+	var argument Arguments
 
-LOOP:
-	for len(args) != 0 {
-		arg := args[0]
-		args = args[1:]
-
-		switch arg {
-		case "-n", "--interval":
-			if len(args) == 0 {
-				return nil, errors.New("-n or --interval require argument")
-			}
-			interval := args[0]
-			args = args[1:]
-			argument.interval, err = time.ParseDuration(interval)
-			if err != nil {
-				seconds, err := strconv.Atoi(interval)
-				if err != nil {
-					return nil, err
-				}
-				argument.interval = time.Duration(seconds) * time.Second
-			}
-		case "-p", "--precise":
-			argument.isPrecise = true
-		case "-c", "--clockwork":
-			argument.isClockwork = true
-		case "--debug":
-			argument.isDebug = true
-		case "-d", "--differences":
-			argument.isDiff = true
-		case "-t", "--no-title":
-			argument.isNoTitle = true
-		case "-h", "--help":
-			argument.isHelp = true
-		case "-v", "--version":
-			argument.isVersion = true
-		default:
-			args = append([]string{arg}, args...)
-			break LOOP
-		}
-	}
+	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
+	flagSet.DurationVarP(&argument.interval, "interval", "n", 2*time.Second, "seconds to wait between updates")
+	flagSet.BoolVarP(&argument.isPrecise, "precise", "p", false, "attempt run command in precise intervals")
+	flagSet.BoolVarP(&argument.isClockwork, "clockwork", "c", false, "run command in precise intervals forcibly")
+	flagSet.BoolVar(&argument.isDebug, "debug", false, "")
+	flagSet.BoolVarP(&argument.isDiff, "differences", "d", false, "highlight changes between updates")
+	flagSet.BoolVarP(&argument.isNoTitle, "no-title", "t", false, "turn off header")
+	flagSet.BoolVarP(&argument.isHelp, "help", "h", false, "display this help and exit")
+	flagSet.BoolVarP(&argument.isVersion, "version", "v", false, "output version information and exit")
 
 	if len(args) == 0 {
-		return &argument, NoCommand
+		return &argument, flagSet.Usage, NoCommand
 	}
 
-	if argument.interval < 10*time.Millisecond {
-		return nil, IntervalTooSmall
+	for i := 0; i < len(args); i++ {
+		if strings.HasPrefix(args[i], "-") {
+			continue
+		}
+
+		if i > 0 {
+			prev := args[i-1]
+			switch prev {
+			case "--interval", "-n":
+				continue
+			}
+		}
+
+		argument.cmd = args[i]
+		if i+1 <= len(args) {
+			argument.args = args[i+1:]
+		}
+
+		_ = flagSet.Parse(args[:i])
+		break
 	}
 
-	argument.cmd = args[0]
-	argument.args = args[1:]
-
-	return &argument, nil
-}
-
-func help() {
-	fmt.Println(`
-Viddy well, gopher. viddy well.
-
-Usage:
- viddy [options] command
-
-Options:
-  -d, --differences          highlight changes between updates
-  -n, --interval <interval>  seconds to wait between updates (default "2s")
-  -p, --precise              attempt run command in precise intervals
-  -c, --clockwork            run command in precise intervals forcibly
-  -t, --no-title             turn off header
-
- -h, --help     display this help and exit
- -v, --version  output version information and exit`)
+	return &argument, flagSet.Usage, nil
 }
