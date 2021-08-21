@@ -2,7 +2,8 @@ package main
 
 import (
 	"errors"
-	"strings"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -27,11 +28,13 @@ var (
 	IntervalTooSmall = errors.New("interval too small")
 )
 
-func parseArguments(args []string) (*Arguments, func(), error) {
+func parseArguments(args []string) (*Arguments, error) {
 	var argument Arguments
 
+	var intervalStr string
+
 	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
-	flagSet.DurationVarP(&argument.interval, "interval", "n", 2*time.Second, "seconds to wait between updates")
+	flagSet.StringVarP(&intervalStr, "interval", "n", "2s", "seconds to wait between updates")
 	flagSet.BoolVarP(&argument.isPrecise, "precise", "p", false, "attempt run command in precise intervals")
 	flagSet.BoolVarP(&argument.isClockwork, "clockwork", "c", false, "run command in precise intervals forcibly")
 	flagSet.BoolVar(&argument.isDebug, "debug", false, "")
@@ -40,31 +43,53 @@ func parseArguments(args []string) (*Arguments, func(), error) {
 	flagSet.BoolVarP(&argument.isHelp, "help", "h", false, "display this help and exit")
 	flagSet.BoolVarP(&argument.isVersion, "version", "v", false, "output version information and exit")
 
-	if len(args) == 0 {
-		return &argument, flagSet.Usage, NoCommand
+	flagSet.SetInterspersed(false)
+
+	if err := flagSet.Parse(args); err != nil {
+		return &argument, err
 	}
 
-	for i := 0; i < len(args); i++ {
-		if strings.HasPrefix(args[i], "-") {
-			continue
+	interval, err := time.ParseDuration(intervalStr)
+	if err != nil {
+		intervalFloat, err := strconv.ParseFloat(intervalStr, 64)
+		if err != nil {
+			return &argument, err
 		}
+		interval = time.Duration(intervalFloat * float64(time.Second))
+	}
+	argument.interval = interval
 
-		if i > 0 {
-			prev := args[i-1]
-			switch prev {
-			case "--interval", "-n":
-				continue
-			}
-		}
-
-		argument.cmd = args[i]
-		if i+1 <= len(args) {
-			argument.args = args[i+1:]
-		}
-
-		_ = flagSet.Parse(args[:i])
-		break
+	if interval < 10 * time.Millisecond {
+		return nil, IntervalTooSmall
 	}
 
-	return &argument, flagSet.Usage, nil
+	rest := flagSet.Args()
+
+	if len(rest) == 0 {
+		return &argument, NoCommand
+	}
+
+	argument.cmd = rest[0]
+	argument.args = rest[1:]
+
+	return &argument, nil
 }
+
+func help() {
+	fmt.Println(`
+Viddy well, gopher. Viddy well.
+
+Usage:
+ viddy [options] command
+
+Options:
+  -d, --differences          highlight changes between updates
+  -n, --interval <interval>  seconds to wait between updates (default "2s")
+  -p, --precise              attempt run command in precise intervals
+  -c, --clockwork            run command in precise intervals forcibly
+  -t, --no-title             turn off header
+
+ -h, --help     display this help and exit
+ -v, --version  output version information and exit`)
+}
+
