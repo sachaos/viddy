@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 type Arguments struct {
@@ -27,68 +29,55 @@ var (
 )
 
 func parseArguments(args []string) (*Arguments, error) {
-	argument := Arguments{
-		interval: 2 * time.Second,
+	var argument Arguments
+
+	var intervalStr string
+
+	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
+	flagSet.StringVarP(&intervalStr, "interval", "n", "2s", "seconds to wait between updates")
+	flagSet.BoolVarP(&argument.isPrecise, "precise", "p", false, "attempt run command in precise intervals")
+	flagSet.BoolVarP(&argument.isClockwork, "clockwork", "c", false, "run command in precise intervals forcibly")
+	flagSet.BoolVar(&argument.isDebug, "debug", false, "")
+	flagSet.BoolVarP(&argument.isDiff, "differences", "d", false, "highlight changes between updates")
+	flagSet.BoolVarP(&argument.isNoTitle, "no-title", "t", false, "turn off header")
+	flagSet.BoolVarP(&argument.isHelp, "help", "h", false, "display this help and exit")
+	flagSet.BoolVarP(&argument.isVersion, "version", "v", false, "output version information and exit")
+
+	flagSet.SetInterspersed(false)
+
+	if err := flagSet.Parse(args); err != nil {
+		return &argument, err
 	}
-	var err error
 
-LOOP:
-	for len(args) != 0 {
-		arg := args[0]
-		args = args[1:]
-
-		switch arg {
-		case "-n", "--interval":
-			if len(args) == 0 {
-				return nil, errors.New("-n or --interval require argument")
-			}
-			interval := args[0]
-			args = args[1:]
-			argument.interval, err = time.ParseDuration(interval)
-			if err != nil {
-				seconds, err := strconv.Atoi(interval)
-				if err != nil {
-					return nil, err
-				}
-				argument.interval = time.Duration(seconds) * time.Second
-			}
-		case "-p", "--precise":
-			argument.isPrecise = true
-		case "-c", "--clockwork":
-			argument.isClockwork = true
-		case "--debug":
-			argument.isDebug = true
-		case "-d", "--differences":
-			argument.isDiff = true
-		case "-t", "--no-title":
-			argument.isNoTitle = true
-		case "-h", "--help":
-			argument.isHelp = true
-		case "-v", "--version":
-			argument.isVersion = true
-		default:
-			args = append([]string{arg}, args...)
-			break LOOP
+	interval, err := time.ParseDuration(intervalStr)
+	if err != nil {
+		intervalFloat, err := strconv.ParseFloat(intervalStr, 64)
+		if err != nil {
+			return &argument, err
 		}
+		interval = time.Duration(intervalFloat * float64(time.Second))
 	}
+	argument.interval = interval
 
-	if len(args) == 0 {
-		return &argument, NoCommand
-	}
-
-	if argument.interval < 10*time.Millisecond {
+	if interval < 10 * time.Millisecond {
 		return nil, IntervalTooSmall
 	}
 
-	argument.cmd = args[0]
-	argument.args = args[1:]
+	rest := flagSet.Args()
+
+	if len(rest) == 0 {
+		return &argument, NoCommand
+	}
+
+	argument.cmd = rest[0]
+	argument.args = rest[1:]
 
 	return &argument, nil
 }
 
 func help() {
 	fmt.Println(`
-Viddy well, gopher. viddy well.
+Viddy well, gopher. Viddy well.
 
 Usage:
  viddy [options] command
@@ -103,3 +92,4 @@ Options:
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)
 }
+

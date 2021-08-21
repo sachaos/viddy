@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_parseArguments(t *testing.T) {
@@ -33,6 +34,39 @@ func Test_parseArguments(t *testing.T) {
 				isClockwork: false,
 				cmd:         "ls",
 				args:        []string{"-l"},
+			},
+		},
+		{
+			name: "-n1 tail -n 1 hoge",
+			args: []string{"-n1", "tail", "-n", "1", "hoge"},
+			exp: &Arguments{
+				interval:    1 * time.Second,
+				isPrecise:   false,
+				isClockwork: false,
+				cmd:         "tail",
+				args:        []string{"-n", "1", "hoge"},
+			},
+		},
+		{
+			name: "tail -n 1 hoge",
+			args: []string{"tail", "-n", "1", "hoge"},
+			exp: &Arguments{
+				interval:    2 * time.Second,
+				isPrecise:   false,
+				isClockwork: false,
+				cmd:         "tail",
+				args:        []string{"-n", "1", "hoge"},
+			},
+		},
+		{
+			name: "-n 0.5 ls",
+			args: []string{"-n", "0.5", "ls"},
+			exp: &Arguments{
+				interval:    500 * time.Millisecond,
+				isPrecise:   false,
+				isClockwork: false,
+				cmd:         "ls",
+				args:        []string{},
 			},
 		},
 		{
