@@ -49,7 +49,7 @@ sudo port install viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.6/viddy_0.1.6_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.7/viddy_0.1.7_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 ### Go
