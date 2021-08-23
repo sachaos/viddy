@@ -19,6 +19,9 @@ type Arguments struct {
 	isHelp      bool
 	isVersion   bool
 
+	shell  	  string
+	shellOpts string
+
 	cmd  string
 	args []string
 }
@@ -42,6 +45,8 @@ func parseArguments(args []string) (*Arguments, error) {
 	flagSet.BoolVarP(&argument.isNoTitle, "no-title", "t", false, "turn off header")
 	flagSet.BoolVarP(&argument.isHelp, "help", "h", false, "display this help and exit")
 	flagSet.BoolVarP(&argument.isVersion, "version", "v", false, "output version information and exit")
+	flagSet.StringVar(&argument.shell, "shell", "sh", "shell (default \"sh\")")
+	flagSet.StringVar(&argument.shellOpts, "shell-options", "", "additional shell options")
 
 	flagSet.SetInterspersed(false)
 
@@ -88,6 +93,8 @@ Options:
   -p, --precise              attempt run command in precise intervals
   -c, --clockwork            run command in precise intervals forcibly
   -t, --no-title             turn off header
+  --shell                    shell (default "sh")
+  --shell-options            additional shell options
 
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)

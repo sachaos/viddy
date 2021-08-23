@@ -26,6 +26,9 @@ type Snapshot struct {
 	command string
 	args    []string
 
+	shell     string
+	shellOpts string
+
 	result []byte
 	start  time.Time
 	end    time.Time
@@ -43,11 +46,14 @@ type Snapshot struct {
 	finish chan<- struct{}
 }
 
-func NewSnapshot(id int64, command string, args []string, before *Snapshot, finish chan<- struct{}) *Snapshot {
+func NewSnapshot(id int64, command string, args []string, shell string, shellOpts string, before *Snapshot, finish chan<- struct{}) *Snapshot {
 	return &Snapshot{
 		id:      id,
 		command: command,
 		args:    args,
+
+		shell: shell,
+		shellOpts: shellOpts,
 
 		before: before,
 		finish: finish,
@@ -99,7 +105,13 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	if runtime.GOOS == "windows" {
 		command = exec.Command(os.Getenv("COMSPEC"), "/c", strings.Join(commands, " "))
 	} else {
-		command = exec.Command("sh", "-c", strings.Join(commands, " "))
+		var args []string
+		for _, o := range strings.Fields(s.shellOpts) {
+			args = append(args, o)
+		}
+		args = append(args, "-c")
+		args = append(args, strings.Join(commands, " "))
+		command = exec.Command(s.shell, args...)
 	}
 	command.Stdout = &b
 
