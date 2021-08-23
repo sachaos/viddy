@@ -2,7 +2,9 @@ package main
 
 import "time"
 
-func ClockSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
+type newSnapFunc func(int64, *Snapshot, chan<-struct{}) *Snapshot
+
+func ClockSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -12,7 +14,7 @@ func ClockSnapshot(begin int64, name string, args []string, interval time.Durati
 		for now := range t {
 			finish := make(chan struct{})
 			id := (now.UnixNano() - begin) / int64(time.Millisecond)
-			s = NewSnapshot(id, name, args, s, finish)
+			s = newSnap(id, s, finish)
 			c <- s
 		}
 	}()
@@ -20,7 +22,7 @@ func ClockSnapshot(begin int64, name string, args []string, interval time.Durati
 	return c
 }
 
-func PreciseSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
+func PreciseSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -31,7 +33,7 @@ func PreciseSnapshot(begin int64, name string, args []string, interval time.Dura
 			finish := make(chan struct{})
 			start := time.Now()
 			id := (start.UnixNano() - begin) / int64(time.Millisecond)
-			ns := NewSnapshot(id, name, args, s, finish)
+			ns := newSnap(id, s, finish)
 			s = ns
 			c <- ns
 			<-finish
@@ -48,7 +50,7 @@ func PreciseSnapshot(begin int64, name string, args []string, interval time.Dura
 	return c
 }
 
-func SequentialSnapshot(begin int64, name string, args []string, interval time.Duration) <-chan *Snapshot {
+func SequentialSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
 	c := make(chan *Snapshot)
 
 	go func() {
@@ -58,7 +60,7 @@ func SequentialSnapshot(begin int64, name string, args []string, interval time.D
 		for {
 			finish := make(chan struct{})
 			id := (time.Now().UnixNano() - begin) / int64(time.Millisecond)
-			s = NewSnapshot(id, name, args, s, finish)
+			s = newSnap(id, s, finish)
 			c <- s
 			<-finish
 

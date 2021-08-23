@@ -70,17 +70,21 @@ var (
 	ViddyIntervalModeSequential ViddyIntervalMode = "sequential"
 )
 
-func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyIntervalMode) *Viddy {
+func NewViddy(duration time.Duration, cmd string, args []string, shell string, shellOpts string, mode ViddyIntervalMode) *Viddy {
 	begin := time.Now().UnixNano()
+
+	newSnap := func(id int64, before *Snapshot, finish chan<-struct{}) *Snapshot {
+		return NewSnapshot(id, cmd, args, shell, shellOpts, before, finish)
+	}
 
 	var snapshotQueue <-chan *Snapshot
 	switch mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(begin, cmd, args, duration)
+		snapshotQueue = ClockSnapshot(begin, newSnap, duration)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(begin, cmd, args, duration)
+		snapshotQueue = SequentialSnapshot(begin, newSnap, duration)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(begin, cmd, args, duration)
+		snapshotQueue = PreciseSnapshot(begin, newSnap, duration)
 	}
 
 	return &Viddy{
