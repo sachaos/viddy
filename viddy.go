@@ -3,13 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 type HistoryRow struct {
@@ -68,19 +69,27 @@ var (
 	ViddyIntervalModeClockwork  ViddyIntervalMode = "clockwork"
 	ViddyIntervalModePrecise    ViddyIntervalMode = "precise"
 	ViddyIntervalModeSequential ViddyIntervalMode = "sequential"
+
+	errCannotCreateSnapshot = errors.New("cannot find the snapshot")
+	errNotCompletedYet      = errors.New("not completed yet")
 )
 
-func NewViddy(duration time.Duration, cmd string, args []string, mode ViddyIntervalMode) *Viddy {
+func NewViddy(duration time.Duration, cmd string, args []string, shell string, shellOpts string, mode ViddyIntervalMode) *Viddy {
 	begin := time.Now().UnixNano()
 
+	newSnap := func(id int64, before *Snapshot, finish chan<- struct{}) *Snapshot {
+		return NewSnapshot(id, cmd, args, shell, shellOpts, before, finish)
+	}
+
 	var snapshotQueue <-chan *Snapshot
+
 	switch mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(begin, cmd, args, duration)
+		snapshotQueue = ClockSnapshot(begin, newSnap, duration)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(begin, cmd, args, duration)
+		snapshotQueue = SequentialSnapshot(newSnap, duration)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(begin, cmd, args, duration)
+		snapshotQueue = PreciseSnapshot(newSnap, duration)
 	}
 
 	return &Viddy{
@@ -150,6 +159,7 @@ func (v *Viddy) diffQueueHandler() {
 
 			id := <-v.diffQueue
 			s := v.getSnapShot(id)
+
 			if s == nil {
 				return
 			}
@@ -158,6 +168,7 @@ func (v *Viddy) diffQueueHandler() {
 			if err != nil {
 				time.Sleep(1 * time.Second)
 				v.diffQueue <- id
+
 				return
 			}
 
@@ -165,12 +176,14 @@ func (v *Viddy) diffQueueHandler() {
 			if !ok {
 				return
 			}
+
 			r.addition.SetText("+" + strconv.Itoa(s.diffAdditionCount))
 			r.deletion.SetText("-" + strconv.Itoa(s.diffDeletionCount))
 		}()
 	}
 }
 
+//nolint:funlen,gocognit,cyclop
 func (v *Viddy) queueHandler() {
 	for {
 		func() {
@@ -182,6 +195,7 @@ func (v *Viddy) queueHandler() {
 				if !ok {
 					return
 				}
+
 				r.id.SetTextColor(tcell.ColorWhite)
 
 				s := v.getSnapShot(id)
@@ -272,28 +286,31 @@ func (v *Viddy) getSnapShot(id int64) *Snapshot {
 func (v *Viddy) renderSnapshot(id int64) error {
 	s := v.getSnapShot(id)
 	if s == nil {
-		return errors.New("cannot find the snapshot")
+		return errCannotCreateSnapshot
 	}
 
 	if !s.completed {
 		v.bodyView.Clear()
-		return errors.New("not completed yet")
+
+		return errNotCompletedYet
 	}
 
 	v.bodyView.Clear()
+
 	return s.render(v.bodyView, v.isShowDiff, v.query)
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Time Machine: %s  Suspend: %s  Diff: %s", convertToOnOrOff(v.isTimeMachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
+	v.statusView.SetText(fmt.Sprintf("Time Machine: %s  Suspend: %s  Diff: %s",
+		convertToOnOrOff(v.isTimeMachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
 }
 
 func convertToOnOrOff(on bool) string {
 	if on {
 		return "[green]ON [white]"
-	} else {
-		return "[red]OFF[white]"
 	}
+
+	return "[red]OFF[white]"
 }
 
 func (v *Viddy) arrange() {
@@ -334,6 +351,7 @@ func (v *Viddy) arrange() {
 	v.app.SetRoot(flex, true)
 }
 
+//nolint: funlen,gocognit,cyclop
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
@@ -356,6 +374,7 @@ func (v *Viddy) Run() error {
 			_ = v.renderSnapshot(id)
 		}
 	})
+
 	v.historyView = h
 
 	var cmd []string
@@ -391,12 +410,14 @@ func (v *Viddy) Run() error {
 		v.isEditQuery = false
 		v.arrange()
 	})
+
 	v.queryEditor = q
 
 	app := tview.NewApplication()
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if v.isEditQuery {
 			v.queryEditor.InputHandler()(event, nil)
+
 			return event
 		}
 
@@ -495,6 +516,7 @@ func (v *Viddy) Run() error {
 
 		return event
 	})
+
 	v.app = app
 
 	go v.diffQueueHandler()
@@ -507,9 +529,5 @@ func (v *Viddy) Run() error {
 
 	v.arrange()
 
-	if err := app.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return app.Run()
 }

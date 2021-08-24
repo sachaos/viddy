@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//nolint:funlen
 func Test_parseArguments(t *testing.T) {
 	testCases := []struct {
 		name   string
@@ -22,7 +23,8 @@ func Test_parseArguments(t *testing.T) {
 				isPrecise:   false,
 				isClockwork: false,
 				cmd:         "ls",
-				args:        []string{"-l"},
+				shell:       "sh",
+				args: []string{"-l"},
 			},
 		},
 		{
@@ -33,6 +35,7 @@ func Test_parseArguments(t *testing.T) {
 				isPrecise:   false,
 				isClockwork: false,
 				cmd:         "ls",
+				shell:       "sh",
 				args:        []string{"-l"},
 			},
 		},
@@ -44,6 +47,7 @@ func Test_parseArguments(t *testing.T) {
 				isPrecise:   false,
 				isClockwork: false,
 				cmd:         "tail",
+				shell:       "sh",
 				args:        []string{"-n", "1", "hoge"},
 			},
 		},
@@ -55,6 +59,7 @@ func Test_parseArguments(t *testing.T) {
 				isPrecise:   false,
 				isClockwork: false,
 				cmd:         "tail",
+				shell:       "sh",
 				args:        []string{"-n", "1", "hoge"},
 			},
 		},
@@ -66,6 +71,7 @@ func Test_parseArguments(t *testing.T) {
 				isPrecise:   false,
 				isClockwork: false,
 				cmd:         "ls",
+				shell:       "sh",
 				args:        []string{},
 			},
 		},
@@ -73,7 +79,7 @@ func Test_parseArguments(t *testing.T) {
 			name:   "invalid interval",
 			args:   []string{"-n", "1ms", "ls", "-l"},
 			exp:    nil,
-			expErr: IntervalTooSmall,
+			expErr: errIntervalTooSmall,
 		},
 	}
 

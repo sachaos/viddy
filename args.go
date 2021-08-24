@@ -19,13 +19,16 @@ type Arguments struct {
 	isHelp      bool
 	isVersion   bool
 
+	shell     string
+	shellOpts string
+
 	cmd  string
 	args []string
 }
 
 var (
-	NoCommand        = errors.New("command is required")
-	IntervalTooSmall = errors.New("interval too small")
+	errNoCommand        = errors.New("command is required")
+	errIntervalTooSmall = errors.New("interval too small")
 )
 
 func parseArguments(args []string) (*Arguments, error) {
@@ -42,6 +45,8 @@ func parseArguments(args []string) (*Arguments, error) {
 	flagSet.BoolVarP(&argument.isNoTitle, "no-title", "t", false, "turn off header")
 	flagSet.BoolVarP(&argument.isHelp, "help", "h", false, "display this help and exit")
 	flagSet.BoolVarP(&argument.isVersion, "version", "v", false, "output version information and exit")
+	flagSet.StringVar(&argument.shell, "shell", "sh", "shell (default \"sh\")")
+	flagSet.StringVar(&argument.shellOpts, "shell-options", "", "additional shell options")
 
 	flagSet.SetInterspersed(false)
 
@@ -55,18 +60,20 @@ func parseArguments(args []string) (*Arguments, error) {
 		if err != nil {
 			return &argument, err
 		}
+
 		interval = time.Duration(intervalFloat * float64(time.Second))
 	}
+
 	argument.interval = interval
 
-	if interval < 10 * time.Millisecond {
-		return nil, IntervalTooSmall
+	if interval < 10*time.Millisecond {
+		return nil, errIntervalTooSmall
 	}
 
 	rest := flagSet.Args()
 
 	if len(rest) == 0 {
-		return &argument, NoCommand
+		return &argument, errNoCommand
 	}
 
 	argument.cmd = rest[0]
@@ -88,8 +95,9 @@ Options:
   -p, --precise              attempt run command in precise intervals
   -c, --clockwork            run command in precise intervals forcibly
   -t, --no-title             turn off header
+  --shell                    shell (default "sh")
+  --shell-options            additional shell options
 
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)
 }
-

@@ -24,8 +24,8 @@ func main() {
 		os.Exit(1)
 	}
 
-
 	var mode ViddyIntervalMode
+
 	switch {
 	case arguments.isPrecise:
 		mode = ViddyIntervalModePrecise
@@ -35,7 +35,7 @@ func main() {
 		mode = ViddyIntervalModeSequential
 	}
 
-	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, mode)
+	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, arguments.shell, arguments.shellOpts, mode)
 	v.isDebug = arguments.isDebug
 	v.isNoTitle = arguments.isNoTitle
 	v.isShowDiff = arguments.isDiff
