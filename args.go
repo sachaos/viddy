@@ -19,7 +19,7 @@ type Arguments struct {
 	isHelp      bool
 	isVersion   bool
 
-	shell  	  string
+	shell     string
 	shellOpts string
 
 	cmd  string
@@ -27,8 +27,8 @@ type Arguments struct {
 }
 
 var (
-	NoCommand        = errors.New("command is required")
-	IntervalTooSmall = errors.New("interval too small")
+	errNoCommand        = errors.New("command is required")
+	errIntervalTooSmall = errors.New("interval too small")
 )
 
 func parseArguments(args []string) (*Arguments, error) {
@@ -60,18 +60,20 @@ func parseArguments(args []string) (*Arguments, error) {
 		if err != nil {
 			return &argument, err
 		}
+
 		interval = time.Duration(intervalFloat * float64(time.Second))
 	}
+
 	argument.interval = interval
 
-	if interval < 10 * time.Millisecond {
-		return nil, IntervalTooSmall
+	if interval < 10*time.Millisecond {
+		return nil, errIntervalTooSmall
 	}
 
 	rest := flagSet.Args()
 
 	if len(rest) == 0 {
-		return &argument, NoCommand
+		return &argument, errNoCommand
 	}
 
 	argument.cmd = rest[0]
@@ -99,4 +101,3 @@ Options:
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)
 }
-
