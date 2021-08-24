@@ -50,8 +50,7 @@ func NewSnapshot(id int64, command string, args []string, shell string, shellOpt
 		id:      id,
 		command: command,
 		args:    args,
-
-		shell:     shell,
+		shell: shell,
 		shellOpts: shellOpts,
 
 		before: before,

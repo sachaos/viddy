@@ -87,7 +87,7 @@ func NewViddy(duration time.Duration, cmd string, args []string, shell string, s
 	case ViddyIntervalModeClockwork:
 		snapshotQueue = ClockSnapshot(begin, newSnap, duration)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(newSnap, duration)
+    snapshotQueue = SequentialSnapshot(newSnap, duration)
 	case ViddyIntervalModePrecise:
 		snapshotQueue = PreciseSnapshot(newSnap, duration)
 	}
