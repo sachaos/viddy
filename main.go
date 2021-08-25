@@ -24,8 +24,8 @@ func main() {
 		os.Exit(1)
 	}
 
-
 	var mode ViddyIntervalMode
+
 	switch {
 	case arguments.isPrecise:
 		mode = ViddyIntervalModePrecise

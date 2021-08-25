@@ -1,0 +1,15 @@
+linters-settings:
+  lll:
+    line-length: 130
+linters:
+  enable-all: true
+  disable:
+    - testpackage
+    - forbidigo
+    - paralleltest
+    - exhaustivestruct
+    - wrapcheck
+    - gomnd
+    - gochecknoglobals
+    - maligned
+    - exhaustive

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,9 +12,8 @@ import (
 	"unicode"
 
 	"github.com/fatih/color"
-	"github.com/sergi/go-diff/diffmatchpatch"
-
 	"github.com/rivo/tview"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 var dmp = diffmatchpatch.New()
@@ -46,13 +44,14 @@ type Snapshot struct {
 	finish chan<- struct{}
 }
 
+//nolint:lll
 func NewSnapshot(id int64, command string, args []string, shell string, shellOpts string, before *Snapshot, finish chan<- struct{}) *Snapshot {
 	return &Snapshot{
 		id:      id,
 		command: command,
 		args:    args,
 
-		shell: shell,
+		shell:     shell,
 		shellOpts: shellOpts,
 
 		before: before,
@@ -62,7 +61,7 @@ func NewSnapshot(id int64, command string, args []string, shell string, shellOpt
 
 func (s *Snapshot) compareFromBefore() error {
 	if s.before != nil && !s.before.completed {
-		return errors.New("not completed")
+		return errNotCompletedYet
 	}
 
 	var beforeResult string
@@ -75,7 +74,9 @@ func (s *Snapshot) compareFromBefore() error {
 	s.diff = dmp.DiffCleanupSemantic(dmp.DiffMain(beforeResult, string(s.result), false))
 	addition := 0
 	deletion := 0
+
 	for _, diff := range s.diff {
+		//nolint:exhaustive
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
 			addition += len(diff.Text)
@@ -83,6 +84,7 @@ func (s *Snapshot) compareFromBefore() error {
 			deletion += len(diff.Text)
 		}
 	}
+
 	s.diffAdditionCount = addition
 	s.diffDeletionCount = deletion
 	s.diffPrepared = true
@@ -90,6 +92,7 @@ func (s *Snapshot) compareFromBefore() error {
 	return nil
 }
 
+//nolint:unparam
 func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	s.start = time.Now()
 	defer func() {
@@ -102,21 +105,23 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	commands = append(commands, s.args...)
 
 	var command *exec.Cmd
+
 	if runtime.GOOS == "windows" {
-		command = exec.Command(os.Getenv("COMSPEC"), "/c", strings.Join(commands, " "))
+		cmdStr := strings.Join(commands, " ")
+		compSec := os.Getenv("COMSPEC")
+		command = exec.Command(compSec, "/c", cmdStr)
 	} else {
 		var args []string
-		for _, o := range strings.Fields(s.shellOpts) {
-			args = append(args, o)
-		}
+		args = append(args, strings.Fields(s.shellOpts)...)
 		args = append(args, "-c")
 		args = append(args, strings.Join(commands, " "))
-		command = exec.Command(s.shell, args...)
+		command = exec.Command(s.shell, args...) //nolint:gosec
 	}
+
 	command.Stdout = &b
 
 	if err := command.Start(); err != nil {
-		return nil
+		return nil //nolint:nilerr
 	}
 
 	go func() {
@@ -135,8 +140,10 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 
 func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 	var err error
+
 	var src string
 
+	//nolint:nestif
 	if isShowDiff {
 		if s.diffPrepared {
 			src = DiffPrettyText(s.diff)
@@ -153,10 +160,11 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 	}
 
 	if query != "" {
-		src = strings.Replace(src, query, fmt.Sprintf(`["s"]%s[""]`, query), -1)
+		src = strings.ReplaceAll(src, query, fmt.Sprintf(`["s"]%s[""]`, query))
 	}
 
 	_, err = io.Copy(tview.ANSIWriter(w), strings.NewReader(src))
+
 	return err
 }
 
