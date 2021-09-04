@@ -3,11 +3,32 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/rivo/tview"
+
+	"github.com/adrg/xdg"
+	"github.com/spf13/viper"
 )
 
 var version string
 
+var DefaultTheme = tview.Theme{}
+
 func main() {
+	v := viper.New()
+	v.SetConfigType("toml")
+	v.SetConfigName("viddy")
+	v.AddConfigPath(xdg.ConfigHome)
+
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			v.SafeWriteConfig()
+		} else {
+			fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	arguments, err := parseArguments(os.Args[1:])
 	if arguments.isHelp {
 		help()
@@ -35,12 +56,14 @@ func main() {
 		mode = ViddyIntervalModeSequential
 	}
 
-	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, arguments.shell, arguments.shellOpts, mode)
-	v.isDebug = arguments.isDebug
-	v.isNoTitle = arguments.isNoTitle
-	v.isShowDiff = arguments.isDiff
+	tview.Styles = DefaultTheme
 
-	if err := v.Run(); err != nil {
+	app := NewViddy(arguments.interval, arguments.cmd, arguments.args, arguments.shell, arguments.shellOpts, mode)
+	app.isDebug = arguments.isDebug
+	app.isNoTitle = arguments.isNoTitle
+	app.isShowDiff = arguments.isDiff
+
+	if err := app.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

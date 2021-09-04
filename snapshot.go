@@ -11,8 +11,9 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/fatih/color"
 	"github.com/rivo/tview"
+
+	"github.com/fatih/color"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -159,11 +160,17 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 		src = string(s.result)
 	}
 
+	var b bytes.Buffer
+	_, err = io.Copy(tview.ANSIWriter(&b), strings.NewReader(src))
+
+	var r io.Reader
 	if query != "" {
-		src = strings.ReplaceAll(src, query, fmt.Sprintf(`["s"]%s[""]`, query))
+		r = strings.NewReader(strings.ReplaceAll(b.String(), query, fmt.Sprintf(`[:yellow]%s[-:-:-]`, query)))
+	} else {
+		r = &b
 	}
 
-	_, err = io.Copy(tview.ANSIWriter(w), strings.NewReader(src))
+	io.Copy(w, r)
 
 	return err
 }

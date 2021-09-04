@@ -196,7 +196,7 @@ func (v *Viddy) queueHandler() {
 					return
 				}
 
-				r.id.SetTextColor(tcell.ColorWhite)
+				r.id.SetTextColor(tview.Styles.PrimaryTextColor)
 
 				s := v.getSnapShot(id)
 				if s == nil {
@@ -220,7 +220,7 @@ func (v *Viddy) queueHandler() {
 				}
 
 				s := v.getSnapShot(id)
-				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tcell.ColorDarkGray)
+				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tview.Styles.SecondaryTextColor)
 				additionCell := tview.NewTableCell("+0").SetTextColor(tcell.ColorGreen)
 				deletionCell := tview.NewTableCell("-0").SetTextColor(tcell.ColorRed)
 
@@ -307,10 +307,10 @@ func (v *Viddy) UpdateStatusView() {
 
 func convertToOnOrOff(on bool) string {
 	if on {
-		return "[green]ON [white]"
+		return "[green]ON [reset]"
 	}
 
-	return "[red]OFF[white]"
+	return "[red]OFF[reset]"
 }
 
 func (v *Viddy) arrange() {
@@ -357,7 +357,6 @@ func (v *Viddy) Run() error {
 	b.SetDynamicColors(true)
 	b.SetTitle("body")
 	b.SetRegions(true)
-	b.Highlight("s")
 	v.bodyView = b
 
 	t := tview.NewTextView()
@@ -374,6 +373,7 @@ func (v *Viddy) Run() error {
 			_ = v.renderSnapshot(id)
 		}
 	})
+	h.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorGray))
 
 	v.historyView = h
 
@@ -402,7 +402,6 @@ func (v *Viddy) Run() error {
 	v.logView = l
 
 	q := tview.NewInputField().SetLabel("/")
-	q.SetFieldBackgroundColor(tcell.ColorBlack)
 	q.SetChangedFunc(func(text string) {
 		v.query = text
 	})
