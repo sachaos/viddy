@@ -49,7 +49,7 @@ sudo port install viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.8/viddy_0.1.8_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.9/viddy_0.1.9_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 ### Go
@@ -79,6 +79,22 @@ Download from [release page](https://github.com/sachaos/viddy/releases)
 | Shift-K   | (Time machine mode) Back to the future  |
 | Shift-F   | (Time machine mode) Go to more past     |
 | Shift-B   | (Time machine mode) Back to more future |
+
+## Configuration
+
+Install your config file on `$XDG_CONFIG_HOME/viddy.toml`
+On macOS, the path is `~/Library/Application\ Support/viddy.toml`.
+
+```toml
+[keymap]
+timemachine_go_to_past = "Down"
+timemachine_go_to_more_past = "Shift-Down"
+timemachine_go_to_future = "Up"
+timemachine_go_to_more_future = "Shift-Up"
+
+[color]
+background = "white" # Default value is inherit from terminal color.
+```
 
 ## What is "viddy" ?
 
