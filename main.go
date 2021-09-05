@@ -3,18 +3,29 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/adrg/xdg"
+	"github.com/rivo/tview"
+	"github.com/spf13/viper"
 )
 
 var version string
 
 func main() {
-	arguments, err := parseArguments(os.Args[1:])
-	if arguments.isHelp {
+	v := viper.New()
+	v.SetConfigType("toml")
+	v.SetConfigName("viddy")
+	v.AddConfigPath(xdg.ConfigHome)
+
+	_ = v.ReadInConfig()
+
+	conf, err := newConfig(v, os.Args[1:])
+	if conf.runtime.help {
 		help()
 		os.Exit(0)
 	}
 
-	if arguments.isVersion {
+	if conf.runtime.version {
 		fmt.Printf("viddy version: %s\n", version)
 		os.Exit(0)
 	}
@@ -24,24 +35,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	var mode ViddyIntervalMode
+	tview.Styles = conf.theme.Theme
 
-	switch {
-	case arguments.isPrecise:
-		mode = ViddyIntervalModePrecise
-	case arguments.isClockwork:
-		mode = ViddyIntervalModeClockwork
-	default:
-		mode = ViddyIntervalModeSequential
-	}
+	app := NewViddy(conf)
 
-	v := NewViddy(arguments.interval, arguments.cmd, arguments.args, arguments.shell, arguments.shellOpts, mode)
-	v.isDebug = arguments.isDebug
-	v.isNoTitle = arguments.isNoTitle
-	v.isShowDiff = arguments.isDiff
-
-	if err := v.Run(); err != nil {
+	if err := app.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func help() {
+	fmt.Println(`
+Viddy well, gopher. Viddy well.
+
+Usage:
+ viddy [options] command
+
+Options:
+  -d, --differences          highlight changes between updates
+  -n, --interval <interval>  seconds to wait between updates (default "2s")
+  -p, --precise              attempt run command in precise intervals
+  -c, --clockwork            run command in precise intervals forcibly
+  -t, --no-title             turn off header
+  --shell                    shell (default "sh")
+  --shell-options            additional shell options
+
+ -h, --help     display this help and exit
+ -v, --version  output version information and exit`)
 }

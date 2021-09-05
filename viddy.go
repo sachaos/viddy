@@ -23,6 +23,8 @@ type HistoryRow struct {
 type Viddy struct {
 	begin int64
 
+	keymap keymapping
+
 	cmd  string
 	args []string
 
@@ -74,29 +76,31 @@ var (
 	errNotCompletedYet      = errors.New("not completed yet")
 )
 
-func NewViddy(duration time.Duration, cmd string, args []string, shell string, shellOpts string, mode ViddyIntervalMode) *Viddy {
+func NewViddy(conf *config) *Viddy {
 	begin := time.Now().UnixNano()
 
 	newSnap := func(id int64, before *Snapshot, finish chan<- struct{}) *Snapshot {
-		return NewSnapshot(id, cmd, args, shell, shellOpts, before, finish)
+		return NewSnapshot(id, conf.runtime.cmd, conf.runtime.args, conf.general.shell, conf.general.shellOptions, before, finish)
 	}
 
 	var snapshotQueue <-chan *Snapshot
 
-	switch mode {
+	switch conf.runtime.mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(begin, newSnap, duration)
+		snapshotQueue = ClockSnapshot(begin, newSnap, conf.runtime.interval)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(newSnap, duration)
+		snapshotQueue = SequentialSnapshot(newSnap, conf.runtime.interval)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(newSnap, duration)
+		snapshotQueue = PreciseSnapshot(newSnap, conf.runtime.interval)
 	}
 
 	return &Viddy{
+		keymap: conf.keymap,
+
 		begin:       begin,
-		cmd:         cmd,
-		args:        args,
-		duration:    duration,
+		cmd:         conf.runtime.cmd,
+		args:        conf.runtime.args,
+		duration:    conf.runtime.interval,
 		snapshots:   sync.Map{},
 		historyRows: map[int64]*HistoryRow{},
 
@@ -104,6 +108,10 @@ func NewViddy(duration time.Duration, cmd string, args []string, shell string, s
 		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
 		diffQueue:     make(chan int64, 100),
+
+		isShowDiff: conf.runtime.differences,
+		isNoTitle:  conf.runtime.noTitle,
+		isDebug:    conf.general.debug,
 
 		currentID:        -1,
 		latestFinishedID: -1,
@@ -196,7 +204,7 @@ func (v *Viddy) queueHandler() {
 					return
 				}
 
-				r.id.SetTextColor(tcell.ColorWhite)
+				r.id.SetTextColor(tview.Styles.PrimaryTextColor)
 
 				s := v.getSnapShot(id)
 				if s == nil {
@@ -220,7 +228,7 @@ func (v *Viddy) queueHandler() {
 				}
 
 				s := v.getSnapShot(id)
-				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tcell.ColorDarkGray)
+				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tview.Styles.SecondaryTextColor)
 				additionCell := tview.NewTableCell("+0").SetTextColor(tcell.ColorGreen)
 				deletionCell := tview.NewTableCell("-0").SetTextColor(tcell.ColorRed)
 
@@ -307,10 +315,10 @@ func (v *Viddy) UpdateStatusView() {
 
 func convertToOnOrOff(on bool) string {
 	if on {
-		return "[green]ON [white]"
+		return "[green]ON [reset]"
 	}
 
-	return "[red]OFF[white]"
+	return "[red]OFF[reset]"
 }
 
 func (v *Viddy) arrange() {
@@ -357,7 +365,6 @@ func (v *Viddy) Run() error {
 	b.SetDynamicColors(true)
 	b.SetTitle("body")
 	b.SetRegions(true)
-	b.Highlight("s")
 	v.bodyView = b
 
 	t := tview.NewTextView()
@@ -374,6 +381,7 @@ func (v *Viddy) Run() error {
 			_ = v.renderSnapshot(id)
 		}
 	})
+	h.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorGray))
 
 	v.historyView = h
 
@@ -402,7 +410,6 @@ func (v *Viddy) Run() error {
 	v.logView = l
 
 	q := tview.NewInputField().SetLabel("/")
-	q.SetFieldBackgroundColor(tcell.ColorBlack)
 	q.SetChangedFunc(func(text string) {
 		v.query = text
 	})
@@ -415,84 +422,77 @@ func (v *Viddy) Run() error {
 
 	app := tview.NewApplication()
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		v.println(fmt.Sprintf("key: %+v", event))
+
 		if v.isEditQuery {
 			v.queryEditor.InputHandler()(event, nil)
 
 			return event
 		}
 
-		switch event.Rune() {
-		case ' ':
+		keystroke := KeyStroke{
+			Key:     event.Key(),
+			Rune:    event.Rune(),
+			ModMask: event.Modifiers(),
+		}
+
+		var any bool
+		if _, ok := v.keymap.toggleTimeMachine[keystroke]; ok {
 			v.SetIsTimeMachine(!v.isTimeMachine)
+			any = true
+		}
+
+		if _, ok := v.keymap.goToPastOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToPastOnTimeMachine()
+			any = true
+		}
+
+		if _, ok := v.keymap.goToFutureOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToFutureOnTimeMachine()
+			any = true
+		}
+
+		if _, ok := v.keymap.goToMorePastOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToMorePastOnTimeMachine()
+			any = true
+		}
+
+		if _, ok := v.keymap.goToMoreFutureOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToMoreFutureOnTimeMachine()
+			any = true
+		}
+
+		if _, ok := v.keymap.goToNowOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToNowOnTimeMachine()
+			any = true
+		}
+
+		if _, ok := v.keymap.goToOldestOnTimeMachine[keystroke]; ok {
+			if !v.isTimeMachine {
+				return event
+			}
+			v.goToOldestOnTimeMachine()
+			any = true
+		}
+
+		switch event.Rune() {
 		case 's':
 			v.isSuspend = !v.isSuspend
-		case 'J':
-			if !v.isTimeMachine {
-				return event
-			}
-			count := v.historyView.GetRowCount()
-			selection, _ := v.historyView.GetSelection()
-
-			if selection+1 < count {
-				cell := v.historyView.GetCell(selection+1, 0)
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			}
-		case 'K':
-			if !v.isTimeMachine {
-				return event
-			}
-			selection, _ := v.historyView.GetSelection()
-			if 0 <= selection-1 {
-				cell := v.historyView.GetCell(selection-1, 0)
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			}
-		case 'F':
-			if !v.isTimeMachine {
-				return event
-			}
-			count := v.historyView.GetRowCount()
-			selection, _ := v.historyView.GetSelection()
-
-			if selection+10 < count {
-				cell := v.historyView.GetCell(selection+10, 0)
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			} else {
-				cell := v.historyView.GetCell(count-1, 0)
-				v.println("count:", count)
-				v.println(fmt.Sprintf("cell.Text: '%s'", cell.Text))
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			}
-
-		case 'B':
-			if !v.isTimeMachine {
-				return event
-			}
-			selection, _ := v.historyView.GetSelection()
-			if 0 <= selection-10 {
-				cell := v.historyView.GetCell(selection-10, 0)
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			} else {
-				cell := v.historyView.GetCell(0, 0)
-				id, err := strconv.ParseInt(cell.Text, 10, 64)
-				if err == nil {
-					v.setSelection(id)
-				}
-			}
 		case 'd':
 			v.SetIsShowDiff(!v.isShowDiff)
 		case 't':
@@ -509,7 +509,9 @@ func (v *Viddy) Run() error {
 			v.isEditQuery = true
 			v.arrange()
 		default:
-			v.bodyView.InputHandler()(event, nil)
+			if !any {
+				v.bodyView.InputHandler()(event, nil)
+			}
 		}
 
 		v.UpdateStatusView()
@@ -530,4 +532,74 @@ func (v *Viddy) Run() error {
 	v.arrange()
 
 	return app.Run()
+}
+
+func (v *Viddy) goToPastOnTimeMachine() {
+	count := v.historyView.GetRowCount()
+	selection, _ := v.historyView.GetSelection()
+
+	if selection+1 < count {
+		cell := v.historyView.GetCell(selection+1, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	}
+}
+
+func (v *Viddy) goToFutureOnTimeMachine() {
+	selection, _ := v.historyView.GetSelection()
+	if 0 <= selection-1 {
+		cell := v.historyView.GetCell(selection-1, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	}
+}
+
+func (v *Viddy) goToMorePastOnTimeMachine() {
+	count := v.historyView.GetRowCount()
+	selection, _ := v.historyView.GetSelection()
+
+	if selection+10 < count {
+		cell := v.historyView.GetCell(selection+10, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	} else {
+		cell := v.historyView.GetCell(count-1, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	}
+}
+
+func (v *Viddy) goToMoreFutureOnTimeMachine() {
+	selection, _ := v.historyView.GetSelection()
+	if 0 <= selection-10 {
+		cell := v.historyView.GetCell(selection-10, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	} else {
+		cell := v.historyView.GetCell(0, 0)
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+			v.setSelection(id)
+		}
+	}
+}
+
+func (v *Viddy) goToNowOnTimeMachine() {
+	cell := v.historyView.GetCell(0, 0)
+	if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+		v.setSelection(id)
+	}
+}
+
+func (v *Viddy) goToOldestOnTimeMachine() {
+	count := v.historyView.GetRowCount()
+	cell := v.historyView.GetCell(count-1, 0)
+
+	if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
+		v.setSelection(id)
+	}
 }
