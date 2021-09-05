@@ -6,12 +6,9 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/spf13/viper"
-
 	"github.com/rivo/tview"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_newConfig(t *testing.T) {
@@ -52,6 +49,8 @@ func Test_newConfig(t *testing.T) {
 			goToFutureOnTimeMachine:     map[KeyStroke]struct{}{mustParseKeymap("Shift-K"): {}},
 			goToMorePastOnTimeMachine:   map[KeyStroke]struct{}{mustParseKeymap("Shift-F"): {}},
 			goToMoreFutureOnTimeMachine: map[KeyStroke]struct{}{mustParseKeymap("Shift-B"): {}},
+			goToNowOnTimeMachine:        map[KeyStroke]struct{}{mustParseKeymap("Shift-N"): {}},
+			goToOldestOnTimeMachine:     map[KeyStroke]struct{}{mustParseKeymap("Shift-O"): {}},
 		},
 	}
 
