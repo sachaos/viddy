@@ -21,21 +21,19 @@ func main() {
 	v.AddConfigPath(xdg.ConfigHome)
 
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			v.SafeWriteConfig()
-		} else {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
-	arguments, err := parseArguments(os.Args[1:])
-	if arguments.isHelp {
+	conf, err := newConfig(v, os.Args[1:])
+	if conf.runtime.help {
 		help()
 		os.Exit(0)
 	}
 
-	if arguments.isVersion {
+	if conf.runtime.version {
 		fmt.Printf("viddy version: %s\n", version)
 		os.Exit(0)
 	}
@@ -45,26 +43,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	var mode ViddyIntervalMode
+	tview.Styles = conf.theme.Theme
 
-	switch {
-	case arguments.isPrecise:
-		mode = ViddyIntervalModePrecise
-	case arguments.isClockwork:
-		mode = ViddyIntervalModeClockwork
-	default:
-		mode = ViddyIntervalModeSequential
-	}
-
-	tview.Styles = DefaultTheme
-
-	app := NewViddy(arguments.interval, arguments.cmd, arguments.args, arguments.shell, arguments.shellOpts, mode)
-	app.isDebug = arguments.isDebug
-	app.isNoTitle = arguments.isNoTitle
-	app.isShowDiff = arguments.isDiff
+	app := NewViddy(conf)
 
 	if err := app.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func help() {
+	fmt.Println(`
+Viddy well, gopher. Viddy well.
+
+Usage:
+ viddy [options] command
+
+Options:
+  -d, --differences          highlight changes between updates
+  -n, --interval <interval>  seconds to wait between updates (default "2s")
+  -p, --precise              attempt run command in precise intervals
+  -c, --clockwork            run command in precise intervals forcibly
+  -t, --no-title             turn off header
+  --shell                    shell (default "sh")
+  --shell-options            additional shell options
+
+ -h, --help     display this help and exit
+ -v, --version  output version information and exit`)
 }
