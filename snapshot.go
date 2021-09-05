@@ -11,9 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/rivo/tview"
-
 	"github.com/fatih/color"
+	"github.com/rivo/tview"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -170,7 +169,7 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 		r = &b
 	}
 
-	io.Copy(w, r)
+	_, _ = io.Copy(w, r)
 
 	return err
 }

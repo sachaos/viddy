@@ -540,8 +540,7 @@ func (v *Viddy) goToPastOnTimeMachine() {
 
 	if selection+1 < count {
 		cell := v.historyView.GetCell(selection+1, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	}
@@ -551,8 +550,7 @@ func (v *Viddy) goToFutureOnTimeMachine() {
 	selection, _ := v.historyView.GetSelection()
 	if 0 <= selection-1 {
 		cell := v.historyView.GetCell(selection-1, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	}
@@ -564,14 +562,12 @@ func (v *Viddy) goToMorePastOnTimeMachine() {
 
 	if selection+10 < count {
 		cell := v.historyView.GetCell(selection+10, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	} else {
 		cell := v.historyView.GetCell(count-1, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	}
@@ -581,14 +577,12 @@ func (v *Viddy) goToMoreFutureOnTimeMachine() {
 	selection, _ := v.historyView.GetSelection()
 	if 0 <= selection-10 {
 		cell := v.historyView.GetCell(selection-10, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	} else {
 		cell := v.historyView.GetCell(0, 0)
-		id, err := strconv.ParseInt(cell.Text, 10, 64)
-		if err == nil {
+		if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 			v.setSelection(id)
 		}
 	}
@@ -596,8 +590,7 @@ func (v *Viddy) goToMoreFutureOnTimeMachine() {
 
 func (v *Viddy) goToNowOnTimeMachine() {
 	cell := v.historyView.GetCell(0, 0)
-	id, err := strconv.ParseInt(cell.Text, 10, 64)
-	if err == nil {
+	if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 		v.setSelection(id)
 	}
 }
@@ -605,8 +598,8 @@ func (v *Viddy) goToNowOnTimeMachine() {
 func (v *Viddy) goToOldestOnTimeMachine() {
 	count := v.historyView.GetRowCount()
 	cell := v.historyView.GetCell(count-1, 0)
-	id, err := strconv.ParseInt(cell.Text, 10, 64)
-	if err == nil {
+
+	if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 		v.setSelection(id)
 	}
 }

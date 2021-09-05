@@ -64,6 +64,7 @@ type keymapping struct {
 	goToOldestOnTimeMachine     map[KeyStroke]struct{}
 }
 
+//nolint:funlen
 func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
 
@@ -90,10 +91,12 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	var conf config
 
 	intervalStr, _ := flagSet.GetString("interval")
+
 	interval, err := parseInterval(intervalStr)
 	if err != nil {
 		return nil, err
 	}
+
 	conf.runtime.interval = interval
 
 	conf.runtime.mode = ViddyIntervalModeSequential
@@ -111,10 +114,19 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.runtime.differences, _ = flagSet.GetBool("differences")
 	conf.runtime.noTitle, _ = flagSet.GetBool("no-title")
 
-	v.BindPFlag("general.debug", flagSet.Lookup("debug"))
-	v.BindPFlag("general.shell", flagSet.Lookup("shell"))
+	if err := v.BindPFlag("general.debug", flagSet.Lookup("debug")); err != nil {
+		return nil, err
+	}
+
+	if err := v.BindPFlag("general.shell", flagSet.Lookup("shell")); err != nil {
+		return nil, err
+	}
+
 	v.SetDefault("general.shell", "sh")
-	v.BindPFlag("general.shell_options", flagSet.Lookup("shell-options"))
+
+	if err := v.BindPFlag("general.shell_options", flagSet.Lookup("shell-options")); err != nil {
+		return nil, err
+	}
 
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
@@ -134,13 +146,20 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		ContrastSecondaryTextColor:  tcell.GetColor(v.GetString("color.contrast_secondary_text")),
 	}
 
-	conf.keymap.toggleTimeMachine = getKeymapDefault(v, "keymap.toggle_timemachine", map[KeyStroke]struct{}{mustParseKeymap(" "): {}})
-	conf.keymap.goToPastOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_past", map[KeyStroke]struct{}{mustParseKeymap("Shift-J"): {}})
-	conf.keymap.goToFutureOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_future", map[KeyStroke]struct{}{mustParseKeymap("Shift-K"): {}})
-	conf.keymap.goToMorePastOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_more_past", map[KeyStroke]struct{}{mustParseKeymap("Shift-F"): {}})
-	conf.keymap.goToMoreFutureOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_more_future", map[KeyStroke]struct{}{mustParseKeymap("Shift-B"): {}})
-	conf.keymap.goToNowOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_now", map[KeyStroke]struct{}{mustParseKeymap("Shift-N"): {}})
-	conf.keymap.goToOldestOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_oldest", map[KeyStroke]struct{}{mustParseKeymap("Shift-O"): {}})
+	conf.keymap.toggleTimeMachine = getKeymapDefault(v, "keymap.toggle_timemachine",
+		map[KeyStroke]struct{}{mustParseKeymap(" "): {}})
+	conf.keymap.goToPastOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_past",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-J"): {}})
+	conf.keymap.goToFutureOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_future",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-K"): {}})
+	conf.keymap.goToMorePastOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_more_past",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-F"): {}})
+	conf.keymap.goToMoreFutureOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_more_future",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-B"): {}})
+	conf.keymap.goToNowOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_now",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-N"): {}})
+	conf.keymap.goToOldestOnTimeMachine = getKeymapDefault(v, "keymap.timemachine_go_to_oldest",
+		map[KeyStroke]struct{}{mustParseKeymap("Shift-O"): {}})
 
 	if conf.runtime.interval < 10*time.Millisecond {
 		return &conf, errIntervalTooSmall
@@ -181,10 +200,18 @@ func getKeymapDefault(v *viper.Viper, key string, d map[KeyStroke]struct{}) map[
 	return keymap
 }
 
+type cannotFindKeyError struct {
+	key string
+}
+
+func (e cannotFindKeyError) Error() string {
+	return fmt.Sprintf("could not find the key: %q", e.key)
+}
+
 func getKeymap(v *viper.Viper, key string) (map[KeyStroke]struct{}, error) {
 	value := v.Get(key)
 	if value == nil {
-		return nil, fmt.Errorf("could not find the key: %q", value)
+		return nil, cannotFindKeyError{key: key}
 	}
 
 	if k, err := cast.ToStringE(value); err == nil {
@@ -198,11 +225,13 @@ func getKeymap(v *viper.Viper, key string) (map[KeyStroke]struct{}, error) {
 
 	if keys, err := cast.ToStringSliceE(value); err == nil {
 		m := map[KeyStroke]struct{}{}
+
 		for _, k := range keys {
 			key, err := ParseKeyStroke(k)
 			if err != nil {
 				return nil, err
 			}
+
 			m[key] = struct{}{}
 		}
 
@@ -221,10 +250,18 @@ func mustParseKeymap(key string) KeyStroke {
 	return keymap
 }
 
-// ParseKeyStroke parse string describing key
+type parseKeyStrokeError struct {
+	key string
+}
+
+func (e parseKeyStrokeError) Error() string {
+	return fmt.Sprintf("connot parse key: %q", e.key)
+}
+
+// ParseKeyStroke parse string describing key.
 func ParseKeyStroke(key string) (KeyStroke, error) {
 	if len(key) == 0 {
-		return KeyStroke{}, fmt.Errorf("connot parse key: %q", key)
+		return KeyStroke{}, parseKeyStrokeError{key: key}
 	}
 
 	var mod tcell.ModMask
@@ -244,18 +281,20 @@ func ParseKeyStroke(key string) (KeyStroke, error) {
 
 		if k, err := keyOf(key); err == nil {
 			mod |= tcell.ModShift
+
 			return KeyStroke{
 				Key:     k,
 				ModMask: mod,
 			}, nil
-		} else {
-			k := []rune(key)[0]
-			return KeyStroke{
-				Key:     tcell.KeyRune,
-				Rune:    unicode.ToUpper(k),
-				ModMask: mod,
-			}, nil
 		}
+
+		k := []rune(key)[0]
+
+		return KeyStroke{
+			Key:     tcell.KeyRune,
+			Rune:    unicode.ToUpper(k),
+			ModMask: mod,
+		}, nil
 	}
 
 	if k, err := keyOf(key); err == nil {
@@ -263,14 +302,21 @@ func ParseKeyStroke(key string) (KeyStroke, error) {
 			Key:     k,
 			ModMask: mod,
 		}, nil
-	} else {
-		k := []rune(key)[0]
-		return KeyStroke{
-			Key:     tcell.KeyRune,
-			Rune:    unicode.ToLower(k),
-			ModMask: mod,
-		}, nil
 	}
+
+	k := []rune(key)[0]
+
+	return KeyStroke{
+		Key:     tcell.KeyRune,
+		Rune:    unicode.ToLower(k),
+		ModMask: mod,
+	}, nil
+}
+
+type keyNotFoundError struct{}
+
+func (k keyNotFoundError) Error() string {
+	return "not found"
 }
 
 func keyOf(key string) (tcell.Key, error) {
@@ -280,5 +326,5 @@ func keyOf(key string) (tcell.Key, error) {
 		}
 	}
 
-	return 0, errors.New("not found")
+	return 0, keyNotFoundError{}
 }

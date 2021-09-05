@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rivo/tview"
-
 	"github.com/adrg/xdg"
+	"github.com/rivo/tview"
 	"github.com/spf13/viper"
 )
 
 var version string
-
-var DefaultTheme = tview.Theme{}
 
 func main() {
 	v := viper.New()
@@ -20,12 +17,7 @@ func main() {
 	v.SetConfigName("viddy")
 	v.AddConfigPath(xdg.ConfigHome)
 
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
-			os.Exit(1)
-		}
-	}
+	_ = v.ReadInConfig()
 
 	conf, err := newConfig(v, os.Args[1:])
 	if conf.runtime.help {

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//nolint:funlen
 func Test_newConfig(t *testing.T) {
 	defaultConfig := config{
 		runtime: runtimeConfig{
@@ -69,6 +70,7 @@ func Test_newConfig(t *testing.T) {
 				c := defaultConfig
 				c.runtime.cmd = "ls"
 				c.runtime.args = []string{}
+
 				return c
 			}(),
 		},
@@ -79,6 +81,7 @@ func Test_newConfig(t *testing.T) {
 			want: func() config {
 				c := defaultConfig
 				c.runtime.help = true
+
 				return c
 			}(),
 			expErr: errNoCommand,
@@ -90,6 +93,7 @@ func Test_newConfig(t *testing.T) {
 			want: func() config {
 				c := defaultConfig
 				c.runtime.version = true
+
 				return c
 			}(),
 			expErr: errNoCommand,
@@ -103,6 +107,7 @@ func Test_newConfig(t *testing.T) {
 				c.runtime.cmd = "ls"
 				c.runtime.args = []string{}
 				c.runtime.interval = 500 * time.Millisecond
+
 				return c
 			}(),
 			expErr: nil,
@@ -116,6 +121,7 @@ func Test_newConfig(t *testing.T) {
 				c.runtime.cmd = "ls"
 				c.runtime.args = []string{}
 				c.runtime.interval = 500 * time.Millisecond
+
 				return c
 			}(),
 			expErr: nil,
@@ -132,6 +138,7 @@ shell = "zsh"
 				c.runtime.cmd = "ls"
 				c.runtime.args = []string{}
 				c.general.shell = "zsh"
+
 				return c
 			}(),
 			expErr: nil,
@@ -152,24 +159,25 @@ timemachine_go_to_more_future = "Shift-Up"
 				c.runtime.cmd = "ls"
 				c.runtime.args = []string{}
 
-				c.keymap.toggleTimeMachine = map[KeyStroke]struct{}{KeyStroke{
+				c.keymap.toggleTimeMachine = map[KeyStroke]struct{}{{
 					Key:  tcell.KeyRune,
 					Rune: 'a',
 				}: {}}
-				c.keymap.goToPastOnTimeMachine = map[KeyStroke]struct{}{KeyStroke{
+				c.keymap.goToPastOnTimeMachine = map[KeyStroke]struct{}{{
 					Key: tcell.KeyDown,
 				}: {}}
-				c.keymap.goToFutureOnTimeMachine = map[KeyStroke]struct{}{KeyStroke{
+				c.keymap.goToFutureOnTimeMachine = map[KeyStroke]struct{}{{
 					Key: tcell.KeyUp,
 				}: {}}
-				c.keymap.goToMorePastOnTimeMachine = map[KeyStroke]struct{}{KeyStroke{
+				c.keymap.goToMorePastOnTimeMachine = map[KeyStroke]struct{}{{
 					Key:     tcell.KeyDown,
 					ModMask: tcell.ModShift,
 				}: {}}
-				c.keymap.goToMoreFutureOnTimeMachine = map[KeyStroke]struct{}{KeyStroke{
+				c.keymap.goToMoreFutureOnTimeMachine = map[KeyStroke]struct{}{{
 					Key:     tcell.KeyUp,
 					ModMask: tcell.ModShift,
 				}: {}}
+
 				return c
 			}(),
 			expErr: nil,
@@ -189,6 +197,7 @@ text = "white"
 
 				c.theme.PrimitiveBackgroundColor = tcell.ColorBlack
 				c.theme.PrimaryTextColor = tcell.ColorWhite
+
 				return c
 			}(),
 			expErr: nil,
