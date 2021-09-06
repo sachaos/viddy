@@ -102,8 +102,7 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 		s.end = time.Now()
 	}()
 
-	var b bytes.Buffer
-	var eb bytes.Buffer
+	var b, eb bytes.Buffer
 
 	commands := []string{s.command}
 	commands = append(commands, s.args...)
@@ -151,6 +150,7 @@ func isWhiteString(str string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -159,18 +159,16 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 
 	if isWhiteString(src) {
 		src = string(s.errorResult)
-		io.WriteString(w, fmt.Sprintf(`[red]%s[-:-:-]`, src))
-		return nil
+		_, err := io.WriteString(w, fmt.Sprintf(`[red]%s[-:-:-]`, src))
+
+		return err
 	}
 
-	//nolint:nestif
 	if isShowDiff {
 		if s.diffPrepared {
 			src = DiffPrettyText(s.diff)
-		} else {
-			if err := s.compareFromBefore(); err == nil {
-				src = DiffPrettyText(s.diff)
-			}
+		} else if err := s.compareFromBefore(); err == nil {
+			src = DiffPrettyText(s.diff)
 		}
 	}
 
@@ -187,6 +185,7 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 	}
 
 	_, err := io.Copy(w, r)
+
 	return err
 }
 

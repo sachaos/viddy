@@ -64,7 +64,7 @@ type keymapping struct {
 	goToOldestOnTimeMachine     map[KeyStroke]struct{}
 }
 
-//nolint:funlen
+//nolint:funlen,cyclop
 func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
 
