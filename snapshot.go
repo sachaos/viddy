@@ -31,6 +31,9 @@ type Snapshot struct {
 	start  time.Time
 	end    time.Time
 
+	exitCode    int
+	errorResult []byte
+
 	completed bool
 	err       error
 
@@ -100,6 +103,7 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	}()
 
 	var b bytes.Buffer
+	var eb bytes.Buffer
 
 	commands := []string{s.command}
 	commands = append(commands, s.args...)
@@ -119,6 +123,7 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	}
 
 	command.Stdout = &b
+	command.Stderr = &eb
 
 	if err := command.Start(); err != nil {
 		return nil //nolint:nilerr
@@ -130,6 +135,8 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 		}
 
 		s.result = b.Bytes()
+		s.errorResult = eb.Bytes()
+		s.exitCode = command.ProcessState.ExitCode()
 		s.completed = true
 		finishedQueue <- s.id
 		close(s.finish)
@@ -138,29 +145,39 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 	return nil
 }
 
-func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
-	var err error
+func isWhiteString(str string) bool {
+	for _, c := range str {
+		if !unicode.IsSpace(c) {
+			return false
+		}
+	}
+	return true
+}
 
-	var src string
+func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
+	src := string(s.result)
+
+	if isWhiteString(src) {
+		src = string(s.errorResult)
+		io.WriteString(w, fmt.Sprintf(`[red]%s[-:-:-]`, src))
+		return nil
+	}
 
 	//nolint:nestif
 	if isShowDiff {
 		if s.diffPrepared {
 			src = DiffPrettyText(s.diff)
 		} else {
-			err := s.compareFromBefore()
-			if err != nil {
-				src = string(s.result)
-			} else {
+			if err := s.compareFromBefore(); err == nil {
 				src = DiffPrettyText(s.diff)
 			}
 		}
-	} else {
-		src = string(s.result)
 	}
 
 	var b bytes.Buffer
-	_, err = io.Copy(tview.ANSIWriter(&b), strings.NewReader(src))
+	if _, err := io.Copy(tview.ANSIWriter(&b), strings.NewReader(src)); err != nil {
+		return err
+	}
 
 	var r io.Reader
 	if query != "" {
@@ -169,8 +186,7 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 		r = &b
 	}
 
-	_, _ = io.Copy(w, r)
-
+	_, err := io.Copy(w, r)
 	return err
 }
 

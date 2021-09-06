@@ -18,6 +18,7 @@ type HistoryRow struct {
 
 	addition *tview.TableCell
 	deletion *tview.TableCell
+	exitCode *tview.TableCell
 }
 
 type Viddy struct {
@@ -213,6 +214,10 @@ func (v *Viddy) queueHandler() {
 
 				v.diffQueue <- s.id
 
+				if s.exitCode > 0 {
+					r.exitCode.SetText(fmt.Sprintf("E(%d)", s.exitCode))
+				}
+
 				ls := v.getSnapShot(v.latestFinishedID)
 				if ls == nil || s.start.After(ls.start) {
 					v.latestFinishedID = id
@@ -229,19 +234,22 @@ func (v *Viddy) queueHandler() {
 
 				s := v.getSnapShot(id)
 				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tview.Styles.SecondaryTextColor)
-				additionCell := tview.NewTableCell("+0").SetTextColor(tcell.ColorGreen)
-				deletionCell := tview.NewTableCell("-0").SetTextColor(tcell.ColorRed)
+				additionCell := tview.NewTableCell("").SetTextColor(tcell.ColorGreen)
+				deletionCell := tview.NewTableCell("").SetTextColor(tcell.ColorRed)
+				exitCodeCell := tview.NewTableCell("").SetTextColor(tcell.ColorYellow)
 
 				v.historyRows[s.id] = &HistoryRow{
 					id:       idCell,
 					addition: additionCell,
 					deletion: deletionCell,
+					exitCode: exitCodeCell,
 				}
 
 				v.historyView.InsertRow(0)
 				v.historyView.SetCell(0, 0, idCell)
 				v.historyView.SetCell(0, 1, additionCell)
 				v.historyView.SetCell(0, 2, deletionCell)
+				v.historyView.SetCell(0, 3, exitCodeCell)
 
 				v.Lock()
 				v.idList = append(v.idList, id)
