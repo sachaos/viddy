@@ -164,7 +164,7 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 
 	var r io.Reader
 	if query != "" {
-		r = strings.NewReader(strings.ReplaceAll(b.String(), query, fmt.Sprintf(`[:yellow]%s[-:-:-]`, query)))
+		r = strings.NewReader(strings.ReplaceAll(b.String(), query, fmt.Sprintf(`[black:yellow]%s[-:-:-]`, query)))
 	} else {
 		r = &b
 	}
