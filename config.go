@@ -28,20 +28,20 @@ type config struct {
 }
 
 type runtimeConfig struct {
-	cmd         string
-	args        []string
-	interval    time.Duration
-	mode        ViddyIntervalMode
-	differences bool
-	noTitle     bool
-	help        bool
-	version     bool
+	cmd      string
+	args     []string
+	interval time.Duration
+	mode     ViddyIntervalMode
+	help     bool
+	version  bool
 }
 
 type general struct {
 	shell        string
 	shellOptions string
 	debug        bool
+	differences  bool
+	noTitle      bool
 }
 
 type theme struct {
@@ -72,12 +72,12 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet.StringP("interval", "n", "2s", "seconds to wait between updates")
 	flagSet.BoolP("precise", "p", false, "attempt run command in precise intervals")
 	flagSet.BoolP("clockwork", "c", false, "run command in precise intervals forcibly")
-	flagSet.BoolP("differences", "d", false, "highlight changes between updates")
-	flagSet.BoolP("no-title", "t", false, "turn off header")
 	flagSet.BoolP("help", "h", false, "display this help and exit")
 	flagSet.BoolP("version", "v", false, "output version information and exit")
 
 	// general
+	flagSet.BoolP("differences", "d", false, "highlight changes between updates")
+	flagSet.BoolP("no-title", "t", false, "turn off header")
 	flagSet.Bool("debug", false, "")
 	flagSet.String("shell", "", "shell (default \"sh\")")
 	flagSet.String("shell-options", "", "additional shell options")
@@ -111,9 +111,6 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.runtime.help, _ = flagSet.GetBool("help")
 	conf.runtime.version, _ = flagSet.GetBool("version")
 
-	conf.runtime.differences, _ = flagSet.GetBool("differences")
-	conf.runtime.noTitle, _ = flagSet.GetBool("no-title")
-
 	if err := v.BindPFlag("general.debug", flagSet.Lookup("debug")); err != nil {
 		return nil, err
 	}
@@ -128,9 +125,19 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.differences", flagSet.Lookup("differences")); err != nil {
+		return nil, err
+	}
+
+	if err := v.BindPFlag("general.no_title", flagSet.Lookup("no-title")); err != nil {
+		return nil, err
+	}
+
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
+	conf.general.differences, _ = flagSet.GetBool("differences")
+	conf.general.noTitle, _ = flagSet.GetBool("no-title")
 
 	conf.theme.Theme = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.GetColor(v.GetString("color.background")),

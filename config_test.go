@@ -15,18 +15,18 @@ import (
 func Test_newConfig(t *testing.T) {
 	defaultConfig := config{
 		runtime: runtimeConfig{
-			cmd:         "",
-			args:        nil,
-			interval:    2 * time.Second,
-			mode:        ViddyIntervalModeSequential,
-			differences: false,
-			noTitle:     false,
-			help:        false,
-			version:     false,
+			cmd:      "",
+			args:     nil,
+			interval: 2 * time.Second,
+			mode:     ViddyIntervalModeSequential,
+			help:     false,
+			version:  false,
 		},
 		general: general{
 			shell:        "sh",
 			shellOptions: "",
+			differences:  false,
+			noTitle:      false,
 			debug:        false,
 		},
 		theme: theme{

@@ -109,8 +109,8 @@ func NewViddy(conf *config) *Viddy {
 		finishedQueue: make(chan int64),
 		diffQueue:     make(chan int64, 100),
 
-		isShowDiff: conf.runtime.differences,
-		isNoTitle:  conf.runtime.noTitle,
+		isShowDiff: conf.general.differences,
+		isNoTitle:  conf.general.noTitle,
 		isDebug:    conf.general.debug,
 
 		currentID:        -1,
