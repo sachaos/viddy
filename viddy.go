@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,6 +47,7 @@ type Viddy struct {
 	bodyView    *tview.TextView
 	app         *tview.Application
 	logView     *tview.TextView
+	helpView    *tview.TextView
 	statusView  *tview.TextView
 	queryEditor *tview.InputField
 
@@ -62,8 +66,9 @@ type Viddy struct {
 
 	query string
 
-	isDebug     bool
-	showLogView bool
+	isDebug      bool
+	showLogView  bool
+	showHelpView bool
 }
 
 type ViddyIntervalMode string
@@ -330,6 +335,11 @@ func convertToOnOrOff(on bool) string {
 }
 
 func (v *Viddy) arrange() {
+	if v.showHelpView {
+		v.app.SetRoot(v.helpView, true)
+		return
+	}
+
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	if !v.isNoTitle {
@@ -417,6 +427,11 @@ func (v *Viddy) Run() error {
 	l.ScrollToEnd()
 	v.logView = l
 
+	hv := tview.NewTextView()
+	hv.SetDynamicColors(true)
+	io.WriteString(hv, v.helpPage())
+	v.helpView = hv
+
 	q := tview.NewInputField().SetLabel("/")
 	q.SetChangedFunc(func(text string) {
 		v.query = text
@@ -498,6 +513,11 @@ func (v *Viddy) Run() error {
 			any = true
 		}
 
+		if event.Key() == tcell.KeyEsc {
+			v.showHelpView = false
+			v.arrange()
+		}
+
 		switch event.Rune() {
 		case 's':
 			v.isSuspend = !v.isSuspend
@@ -509,6 +529,8 @@ func (v *Viddy) Run() error {
 			if v.isDebug {
 				v.ShowLogView(!v.showLogView)
 			}
+		case '?':
+			v.ShowHelpView(!v.showHelpView)
 		case '/':
 			if v.query != "" {
 				v.query = ""
@@ -610,4 +632,97 @@ func (v *Viddy) goToOldestOnTimeMachine() {
 	if id, err := strconv.ParseInt(cell.Text, 10, 64); err == nil {
 		v.setSelection(id)
 	}
+}
+
+var helpTemplate = `Press ESC to go back
+
+ [::b]Key Bindings[-:-:-]
+
+   [::u]General[-:-:-]     
+
+   Toggle time machine mode : [yellow]SPACE[-:-:-]
+   Toggle suspend execution : [yellow]SPACE[-:-:-]
+   Toggle diff              : [yellow]d[-:-:-]
+   Toggle header display    : [yellow]t[-:-:-]
+   Toggle help view         : [yellow]?[-:-:-]
+
+   [::u]Pager[-:-:-]
+
+   Search text              : [yellow]/[-:-:-]
+   Move to next line        : [yellow]j[-:-:-]
+   Move to previous line    : [yellow]k[-:-:-]
+   Page down                : [yellow]Ctrl-F[-:-:-]
+   Page up                  : [yellow]Ctrl-B[-:-:-]
+   Go to top of page        : [yellow]g[-:-:-]
+   Go to bottom of page     : [yellow]G[-:-:-]
+
+   [::u]Time machine[-:-:-]
+
+   Go to the past            : [yellow]{{ .GoToPast }}[-:-:-]
+   Back to the future        : [yellow]{{ .GoToFuture }}[-:-:-]
+   Go to more past           : [yellow]{{ .GoToMorePast }}[-:-:-]
+   Back to more future       : [yellow]{{ .GoToMoreFuture }}[-:-:-]
+   Go to oldest position     : [yellow]{{ .GoToOldest }}[-:-:-]
+   Back to current position  : [yellow]{{ .GoToNow }}[-:-:-]
+`
+
+func keysToString(keys map[KeyStroke]struct{}) string {
+	var str []string
+	for stroke := range keys {
+		str = append(str, formatKeyStroke(stroke))
+	}
+
+	return strings.Join(str, ", ")
+}
+
+func formatKeyStroke(stroke KeyStroke) string {
+	var b strings.Builder
+	if stroke.ModMask&tcell.ModCtrl != 0 {
+		b.WriteString("Ctrl-")
+	}
+
+	if stroke.ModMask&tcell.ModAlt != 0 {
+		b.WriteString("Alt-")
+	}
+
+	if stroke.ModMask&tcell.ModShift != 0 {
+		b.WriteString("Shift-")
+	}
+
+	if stroke.Key == tcell.KeyRune {
+		b.WriteString(string(stroke.Rune))
+	} else {
+		b.WriteString(tcell.KeyNames[stroke.Key])
+	}
+
+	return b.String()
+}
+
+func (v *Viddy) helpPage() string {
+	value := struct {
+		GoToPast       string
+		GoToFuture     string
+		GoToMorePast   string
+		GoToMoreFuture string
+		GoToOldest     string
+		GoToNow        string
+	}{
+		GoToPast:       keysToString(v.keymap.goToPastOnTimeMachine),
+		GoToFuture:     keysToString(v.keymap.goToFutureOnTimeMachine),
+		GoToMorePast:   keysToString(v.keymap.goToMorePastOnTimeMachine),
+		GoToMoreFuture: keysToString(v.keymap.goToMoreFutureOnTimeMachine),
+		GoToOldest:     keysToString(v.keymap.goToOldestOnTimeMachine),
+		GoToNow:        keysToString(v.keymap.goToNowOnTimeMachine),
+	}
+
+	var b bytes.Buffer
+
+	tpl, _ := template.New("").Parse(helpTemplate)
+	_ = tpl.Execute(&b, value)
+	return b.String()
+}
+
+func (v *Viddy) ShowHelpView(b bool) {
+	v.showHelpView = b
+	v.arrange()
 }
