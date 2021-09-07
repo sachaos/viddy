@@ -52,6 +52,11 @@ sudo port install viddy
 wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.10/viddy_0.1.10_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
+#### ArchLinux ( AUR )
+```shell
+yay -S viddy
+```
+Alternatively you can use the [AUR Git repo](https://aur.archlinux.org/packages/viddy/) directly
 ### Go
 
 ```shell
