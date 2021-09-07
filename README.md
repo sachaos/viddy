@@ -53,17 +53,21 @@ wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.10/
 ```
 
 #### ArchLinux ( AUR )
+
 ```shell
 yay -S viddy
 ```
 Alternatively you can use the [AUR Git repo](https://aur.archlinux.org/packages/viddy/) directly
+
 ### Go
 
 ```shell
 go install github.com/sachaos/viddy@latest
 ```
 
-Download from [release page](https://github.com/sachaos/viddy/releases)
+### Other
+
+Download from [release page](https://github.com/sachaos/viddy/releases).
 
 ## Keymaps
 
@@ -99,6 +103,8 @@ timemachine_go_to_past = "Down"
 timemachine_go_to_more_past = "Shift-Down"
 timemachine_go_to_future = "Up"
 timemachine_go_to_more_future = "Shift-Up"
+timemachine_go_to_now = "Ctrl-Shift-Up"
+timemachine_go_to_oldest = "Ctrl-Shift-Down"
 
 [color]
 background = "white" # Default value is inherit from terminal color.
