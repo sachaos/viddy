@@ -73,6 +73,7 @@ Download from [release page](https://github.com/sachaos/viddy/releases)
 | s         | Toggle suspend execution                   |
 | d         | Toggle diff                                |
 | t         | Toggle header display                      |
+| ?         | Toggle help view                           |
 | /         | Search text                                |
 | j         | Pager: next line                           |
 | k         | Pager: previous line                       |
