@@ -337,6 +337,7 @@ func convertToOnOrOff(on bool) string {
 func (v *Viddy) arrange() {
 	if v.showHelpView {
 		v.app.SetRoot(v.helpView, true)
+
 		return
 	}
 
@@ -429,7 +430,7 @@ func (v *Viddy) Run() error {
 
 	hv := tview.NewTextView()
 	hv.SetDynamicColors(true)
-	io.WriteString(hv, v.helpPage())
+	_, _ = io.WriteString(hv, v.helpPage())
 	v.helpView = hv
 
 	q := tview.NewInputField().SetLabel("/")
@@ -667,7 +668,7 @@ var helpTemplate = `Press ESC to go back
 `
 
 func keysToString(keys map[KeyStroke]struct{}) string {
-	var str []string
+	str := make([]string, 0, len(keys))
 	for stroke := range keys {
 		str = append(str, formatKeyStroke(stroke))
 	}
@@ -719,6 +720,7 @@ func (v *Viddy) helpPage() string {
 
 	tpl, _ := template.New("").Parse(helpTemplate)
 	_ = tpl.Execute(&b, value)
+
 	return b.String()
 }
 
