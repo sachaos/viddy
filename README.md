@@ -29,6 +29,10 @@ Viddy well, gopher. Viddy well.
 * Search text.
 * Suspend and restart execution.
 * Run command in precise intervals forcibly.
+* Support shell alias
+    * See detail https://github.com/sachaos/viddy/issues/2#issuecomment-904002053
+* Customize keymappings.
+* Customize color.
 
 ## Install
 
@@ -49,7 +53,7 @@ sudo port install viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.1.10/viddy_0.1.10_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.2.0/viddy_0.2.0_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 #### ArchLinux ( AUR )
@@ -98,6 +102,10 @@ Install your config file on `$XDG_CONFIG_HOME/viddy.toml`
 On macOS, the path is `~/Library/Application\ Support/viddy.toml`.
 
 ```toml
+[general]
+shell = "zsh"
+shell_options = ""
+
 [keymap]
 timemachine_go_to_past = "Down"
 timemachine_go_to_more_past = "Shift-Down"
