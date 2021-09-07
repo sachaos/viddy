@@ -5,11 +5,31 @@ import (
 	"os"
 
 	"github.com/adrg/xdg"
+	"github.com/fatih/color"
 	"github.com/rivo/tview"
 	"github.com/spf13/viper"
+	"github.com/tcnksm/go-latest"
 )
 
 var version string
+
+var githubTag = &latest.GithubTag{
+	Owner:             "sachaos",
+	Repository:        "viddy",
+	FixVersionStrFunc: latest.DeleteFrontV(),
+}
+
+func printVersion() {
+	fmt.Printf("viddy version: %s\n", version)
+
+	res, err := latest.Check(githubTag, version)
+	if err == nil && res.Outdated {
+		text := color.YellowString(fmt.Sprintf("%s is not latest, you should upgrade to v%s", version, res.Current))
+		fmt.Fprintln(os.Stderr, text)
+	}
+
+	os.Exit(0)
+}
 
 func main() {
 	v := viper.New()
@@ -26,8 +46,7 @@ func main() {
 	}
 
 	if conf.runtime.version {
-		fmt.Printf("viddy version: %s\n", version)
-		os.Exit(0)
+		printVersion()
 	}
 
 	if err != nil {
