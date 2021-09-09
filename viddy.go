@@ -310,13 +310,11 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errCannotCreateSnapshot
 	}
 
-	if !s.completed {
-		v.bodyView.Clear()
+	v.bodyView.Clear()
 
+	if !s.completed {
 		return errNotCompletedYet
 	}
-
-	v.bodyView.Clear()
 
 	return s.render(v.bodyView, v.isShowDiff, v.query)
 }
