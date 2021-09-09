@@ -10,7 +10,7 @@ require (
 	github.com/daixiang0/gci v0.2.9 // indirect
 	github.com/fatih/color v1.12.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/gdamore/tcell/v2 v2.3.3
+	github.com/gdamore/tcell/v2 v2.4.1-0.20210904044819-ae5116d72813
 	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.3.0 // indirect
@@ -27,3 +27,5 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	mvdan.cc/gofumpt v0.1.1 // indirect
 )
+
+replace github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2 => github.com/sachaos/tview v0.0.0-20210909084047-7f6f0b84f61c
