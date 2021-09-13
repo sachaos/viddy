@@ -63,6 +63,14 @@ yay -S viddy
 ```
 Alternatively you can use the [AUR Git repo](https://aur.archlinux.org/packages/viddy/) directly
 
+#### Alpine Linux
+
+After [enabling the community repository](https://wiki.alpinelinux.org/wiki/Enable_Community_Repository):
+
+```shell
+apk add viddy
+```
+
 ### Go
 
 ```shell
