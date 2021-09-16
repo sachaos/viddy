@@ -640,7 +640,7 @@ var helpTemplate = `Press ESC to go back
    [::u]General[-:-:-]     
 
    Toggle time machine mode : [yellow]SPACE[-:-:-]
-   Toggle suspend execution : [yellow]SPACE[-:-:-]
+   Toggle suspend execution : [yellow]s[-:-:-]
    Toggle diff              : [yellow]d[-:-:-]
    Toggle header display    : [yellow]t[-:-:-]
    Toggle help view         : [yellow]?[-:-:-]
