@@ -150,7 +150,7 @@ func (v *Viddy) SetIsTimeMachine(b bool) {
 }
 
 func (v *Viddy) println(a ...interface{}) {
-	fmt.Fprintln(v.logView, a...)
+	_, _ = fmt.Fprintln(v.logView, a...)
 }
 
 func (v *Viddy) addSnapshot(s *Snapshot) {
@@ -640,7 +640,7 @@ var helpTemplate = `Press ESC to go back
    [::u]General[-:-:-]     
 
    Toggle time machine mode : [yellow]SPACE[-:-:-]
-   Toggle suspend execution : [yellow]SPACE[-:-:-]
+   Toggle suspend execution : [yellow]s[-:-:-]
    Toggle diff              : [yellow]d[-:-:-]
    Toggle header display    : [yellow]t[-:-:-]
    Toggle help view         : [yellow]?[-:-:-]
