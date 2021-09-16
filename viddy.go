@@ -150,7 +150,7 @@ func (v *Viddy) SetIsTimeMachine(b bool) {
 }
 
 func (v *Viddy) println(a ...interface{}) {
-	fmt.Fprintln(v.logView, a...)
+	_, _ = fmt.Fprintln(v.logView, a...)
 }
 
 func (v *Viddy) addSnapshot(s *Snapshot) {
