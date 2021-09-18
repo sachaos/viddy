@@ -109,6 +109,7 @@ func (s *Snapshot) prepareCommand(commands []string) *exec.Cmd {
 		args = append(args, strings.Join(commands, " "))
 		command = exec.Command(s.shell, args...) //nolint:gosec
 	}
+
 	return command
 }
 

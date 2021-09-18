@@ -10,7 +10,6 @@ import (
 	"github.com/creack/pty"
 )
 
-//nolint:unparam
 func (s *Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error {
 	s.start = time.Now()
 	defer func() {
@@ -30,7 +29,7 @@ func (s *Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error 
 			Cols: uint16(width),
 		})
 		if err != nil {
-			return nil
+			return err
 		}
 
 		go func() {
