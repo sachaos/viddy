@@ -50,7 +50,6 @@ type Viddy struct {
 
 	idList []int64
 
-	middle      *tview.Flex
 	bodyView    *tview.TextView
 	app         *tview.Application
 	logView     *tview.TextView
@@ -331,16 +330,16 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Time Machine: %s  Suspend: %s  Diff: %s",
+	v.statusView.SetText(fmt.Sprintf("Timemachine %s  Suspend %s  Diff %s",
 		convertToOnOrOff(v.isTimeMachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
 }
 
 func convertToOnOrOff(on bool) string {
 	if on {
-		return "[green]ON [reset]"
+		return "[green]◯[reset]"
 	}
 
-	return "[red]OFF[reset]"
+	return "[red]◯[reset]"
 }
 
 func (v *Viddy) arrange() {
@@ -353,32 +352,38 @@ func (v *Viddy) arrange() {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	if !v.isNoTitle {
-		flex.AddItem(
-			tview.NewFlex().SetDirection(tview.FlexColumn).
-				AddItem(v.intervalView, 10, 1, false).
-				AddItem(v.commandView, 0, 1, false).
-				AddItem(v.statusView, 45, 1, false).
-				AddItem(v.timeView, 21, 1, false),
-			3, 1, false)
+		title := tview.NewFlex().SetDirection(tview.FlexColumn).
+			AddItem(v.intervalView, 10, 1, false).
+			AddItem(v.commandView, 0, 1, false).
+			AddItem(v.timeView, 21, 1, false)
+
+		flex.AddItem(title, 3, 1, false)
 	}
 
 	body := tview.NewFlex().SetDirection(tview.FlexRow)
 	body.AddItem(v.bodyView, 0, 1, false)
 
-	if v.isEditQuery || v.query != "" {
-		body.AddItem(v.queryEditor, 1, 1, false)
-	}
-
-	v.middle.Clear()
-	v.middle.AddItem(body, 0, 1, false)
+	middle := tview.NewFlex().SetDirection(tview.FlexColumn)
+	middle.AddItem(body, 0, 1, false)
 
 	if v.isTimeMachine {
-		v.middle.AddItem(v.historyView, 21, 1, true)
+		middle.AddItem(v.historyView, 21, 1, true)
 	}
 
 	flex.AddItem(
-		v.middle,
+		middle,
 		0, 1, false)
+
+	bottom := tview.NewFlex().SetDirection(tview.FlexColumn)
+
+	if v.isEditQuery || v.query != "" {
+		bottom.AddItem(v.queryEditor, 0, 1, false)
+	} else {
+		bottom.AddItem(tview.NewBox(), 0, 1, false)
+	}
+	bottom.AddItem(v.statusView, 34, 1, false)
+
+	flex.AddItem(bottom, 1, 1, false)
 
 	if v.showLogView {
 		flex.AddItem(v.logView, 10, 1, false)
@@ -402,7 +407,7 @@ func (v *Viddy) Run() error {
 	v.timeView = t
 
 	h := tview.NewTable()
-	h.SetBorder(true).SetTitle("History")
+	h.SetBorder(true)
 	h.ScrollToBeginning()
 	h.SetSelectionChangedFunc(func(row, column int) {
 		c := h.GetCell(row, column)
@@ -430,7 +435,6 @@ func (v *Viddy) Run() error {
 	v.intervalView = d
 
 	s := tview.NewTextView()
-	s.SetBorder(true).SetTitle("Status")
 	s.SetDynamicColors(true)
 	v.statusView = s
 
@@ -443,9 +447,6 @@ func (v *Viddy) Run() error {
 	hv.SetDynamicColors(true)
 	_, _ = io.WriteString(hv, v.helpPage())
 	v.helpView = hv
-
-	middle := tview.NewFlex().SetDirection(tview.FlexColumn)
-	v.middle = middle
 
 	q := tview.NewInputField().SetLabel("/")
 	q.SetChangedFunc(func(text string) {
