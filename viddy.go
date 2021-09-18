@@ -406,6 +406,8 @@ func (v *Viddy) Run() error {
 
 	h := tview.NewTable()
 	v.historyView = h
+	h.SetTitle("History")
+	h.SetTitleAlign(tview.AlignLeft)
 	h.SetBorder(true)
 	h.ScrollToBeginning()
 	h.SetSelectionChangedFunc(func(row, column int) {
