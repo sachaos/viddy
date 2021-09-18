@@ -29,7 +29,6 @@ func (s *Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error 
 		pty, err := pty.StartWithSize(command, &pty.Winsize{
 			Cols: uint16(width),
 		})
-
 		if err != nil {
 			return nil
 		}

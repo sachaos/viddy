@@ -11,13 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/moby/term"
-
-	"sync/atomic"
-
 	"github.com/gdamore/tcell/v2"
+	"github.com/moby/term"
 	"github.com/rivo/tview"
 )
 
@@ -321,7 +319,9 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errCannotCreateSnapshot
 	}
 
+	v.bodyView.Lock()
 	v.bodyView.Clear()
+	v.bodyView.Unlock()
 
 	if !s.completed {
 		return errNotCompletedYet
