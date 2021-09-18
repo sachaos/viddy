@@ -318,9 +318,7 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errCannotCreateSnapshot
 	}
 
-	v.bodyView.Lock()
 	v.bodyView.Clear()
-	v.bodyView.Unlock()
 
 	if !s.completed {
 		return errNotCompletedYet
@@ -380,6 +378,7 @@ func (v *Viddy) arrange() {
 	} else {
 		bottom.AddItem(tview.NewBox(), 0, 1, false)
 	}
+
 	bottom.AddItem(v.statusView, 18, 1, false)
 
 	flex.AddItem(bottom, 1, 1, false)
