@@ -450,6 +450,7 @@ func (v *Viddy) Run() error {
 	q := tview.NewInputField().SetLabel("/")
 	q.SetChangedFunc(func(text string) {
 		v.query = text
+		_ = v.renderSnapshot(v.currentID)
 	})
 	q.SetDoneFunc(func(key tcell.Key) {
 		v.isEditQuery = false
