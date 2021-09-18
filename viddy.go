@@ -382,6 +382,7 @@ func (v *Viddy) Run() error {
 	b.SetDynamicColors(true)
 	b.SetTitle("body")
 	b.SetRegions(true)
+	b.SetWrap(false)
 	v.bodyView = b
 
 	t := tview.NewTextView()
