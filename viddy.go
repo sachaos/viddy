@@ -330,8 +330,7 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Timemachine %s  Suspend %s  Diff %s",
-		convertToOnOrOff(v.isTimeMachine), convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
+	v.statusView.SetText(fmt.Sprintf("Suspend %s  Diff %s", convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
 }
 
 func convertToOnOrOff(on bool) string {
@@ -381,7 +380,7 @@ func (v *Viddy) arrange() {
 	} else {
 		bottom.AddItem(tview.NewBox(), 0, 1, false)
 	}
-	bottom.AddItem(v.statusView, 34, 1, false)
+	bottom.AddItem(v.statusView, 18, 1, false)
 
 	flex.AddItem(bottom, 1, 1, false)
 
