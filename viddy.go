@@ -394,7 +394,6 @@ func (v *Viddy) arrange() {
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
-	b.SetTitle("body")
 	b.SetRegions(true)
 	b.GetInnerRect()
 	b.SetWrap(false)
@@ -402,13 +401,15 @@ func (v *Viddy) Run() error {
 
 	t := tview.NewTextView()
 	t.SetBorder(true).SetTitle("Time")
+	t.SetTitleAlign(tview.AlignLeft)
 	v.timeView = t
 
 	h := tview.NewTable()
+	v.historyView = h
 	h.SetBorder(true)
 	h.ScrollToBeginning()
 	h.SetSelectionChangedFunc(func(row, column int) {
-		c := h.GetCell(row, column)
+		c := v.historyView.GetCell(row, column)
 		id, err := strconv.ParseInt(c.Text, 10, 64)
 		if err == nil {
 			_ = v.renderSnapshot(id)
@@ -416,19 +417,19 @@ func (v *Viddy) Run() error {
 	})
 	h.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorGray))
 
-	v.historyView = h
-
 	var cmd []string
 	cmd = append(cmd, v.cmd)
 	cmd = append(cmd, v.args...)
 
 	c := tview.NewTextView()
 	c.SetBorder(true).SetTitle("Command")
+	c.SetTitleAlign(tview.AlignLeft)
 	c.SetText(strings.Join(cmd, " "))
 	v.commandView = c
 
 	d := tview.NewTextView()
 	d.SetBorder(true).SetTitle("Every")
+	d.SetTitleAlign(tview.AlignLeft)
 	d.SetText(v.duration.String())
 	v.intervalView = d
 
