@@ -42,6 +42,7 @@ type general struct {
 	debug        bool
 	differences  bool
 	noTitle      bool
+	pty          bool
 }
 
 type theme struct {
@@ -81,6 +82,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet.Bool("debug", false, "")
 	flagSet.String("shell", "", "shell (default \"sh\")")
 	flagSet.String("shell-options", "", "additional shell options")
+	flagSet.Bool("pty", false, "run on pty (experimental)")
 
 	flagSet.SetInterspersed(false)
 
@@ -133,11 +135,16 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.pty", flagSet.Lookup("pty")); err != nil {
+		return nil, err
+	}
+
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
 	conf.general.differences, _ = flagSet.GetBool("differences")
 	conf.general.noTitle, _ = flagSet.GetBool("no-title")
+	conf.general.pty = v.GetBool("general.pty")
 
 	conf.theme.Theme = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.GetColor(v.GetString("color.background")),

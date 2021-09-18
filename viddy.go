@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/moby/term"
 	"github.com/rivo/tview"
 )
 
@@ -42,8 +45,12 @@ type Viddy struct {
 	historyRows  map[int64]*HistoryRow
 	sync.RWMutex
 
+	// bWidth store current pty width.
+	bWidth atomic.Value
+
 	idList []int64
 
+	middle      *tview.Flex
 	bodyView    *tview.TextView
 	app         *tview.Application
 	logView     *tview.TextView
@@ -63,6 +70,7 @@ type Viddy struct {
 	isNoTitle        bool
 	isShowDiff       bool
 	isEditQuery      bool
+	pty              bool
 
 	query string
 
@@ -118,6 +126,7 @@ func NewViddy(conf *config) *Viddy {
 		isShowDiff: conf.general.differences,
 		isNoTitle:  conf.general.noTitle,
 		isDebug:    conf.general.debug,
+		pty:        conf.general.pty,
 
 		currentID:        -1,
 		latestFinishedID: -1,
@@ -162,7 +171,7 @@ func (v *Viddy) startRunner() {
 		v.addSnapshot(s)
 		v.queue <- s.id
 
-		_ = s.run(v.finishedQueue)
+		_ = s.run(v.finishedQueue, v.getBodyWidth(), v.pty)
 	}
 }
 
@@ -310,7 +319,9 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errCannotCreateSnapshot
 	}
 
+	v.bodyView.Lock()
 	v.bodyView.Clear()
+	v.bodyView.Unlock()
 
 	if !s.completed {
 		return errNotCompletedYet
@@ -358,15 +369,15 @@ func (v *Viddy) arrange() {
 		body.AddItem(v.queryEditor, 1, 1, false)
 	}
 
-	middle := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(body, 0, 1, false)
+	v.middle.Clear()
+	v.middle.AddItem(body, 0, 1, false)
 
 	if v.isTimeMachine {
-		middle.AddItem(v.historyView, 21, 1, true)
+		v.middle.AddItem(v.historyView, 21, 1, true)
 	}
 
 	flex.AddItem(
-		middle,
+		v.middle,
 		0, 1, false)
 
 	if v.showLogView {
@@ -382,6 +393,8 @@ func (v *Viddy) Run() error {
 	b.SetDynamicColors(true)
 	b.SetTitle("body")
 	b.SetRegions(true)
+	b.GetInnerRect()
+	b.SetWrap(false)
 	v.bodyView = b
 
 	t := tview.NewTextView()
@@ -430,6 +443,9 @@ func (v *Viddy) Run() error {
 	hv.SetDynamicColors(true)
 	_, _ = io.WriteString(hv, v.helpPage())
 	v.helpView = hv
+
+	middle := tview.NewFlex().SetDirection(tview.FlexColumn)
+	v.middle = middle
 
 	q := tview.NewInputField().SetLabel("/")
 	q.SetChangedFunc(func(text string) {
@@ -548,17 +564,22 @@ func (v *Viddy) Run() error {
 		return event
 	})
 
-	v.app = app
-
-	go v.diffQueueHandler()
-	go v.queueHandler()
-	go v.startRunner()
+	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		v.setBodyWidth()
+	})
 
 	v.UpdateStatusView()
 
 	app.EnableMouse(true)
 
+	v.app = app
 	v.arrange()
+
+	v.setBodyWidth()
+
+	go v.diffQueueHandler()
+	go v.queueHandler()
+	go v.startRunner()
 
 	return app.Run()
 }
@@ -695,6 +716,19 @@ func formatKeyStroke(stroke KeyStroke) string {
 	}
 
 	return b.String()
+}
+
+func (v *Viddy) setBodyWidth() {
+	width := 80
+	if winsize, err := term.GetWinsize(os.Stdout.Fd()); err == nil {
+		width = int(winsize.Width)
+	}
+
+	v.bWidth.Store(width)
+}
+
+func (v *Viddy) getBodyWidth() int {
+	return v.bWidth.Load().(int)
 }
 
 func (v *Viddy) helpPage() string {
