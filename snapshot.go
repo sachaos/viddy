@@ -95,18 +95,7 @@ func (s *Snapshot) compareFromBefore() error {
 	return nil
 }
 
-//nolint:unparam
-func (s *Snapshot) run(finishedQueue chan<- int64) error {
-	s.start = time.Now()
-	defer func() {
-		s.end = time.Now()
-	}()
-
-	var b, eb bytes.Buffer
-
-	commands := []string{s.command}
-	commands = append(commands, s.args...)
-
+func (s *Snapshot) prepareCommand(commands []string) *exec.Cmd {
 	var command *exec.Cmd
 
 	if runtime.GOOS == "windows" {
@@ -120,28 +109,7 @@ func (s *Snapshot) run(finishedQueue chan<- int64) error {
 		args = append(args, strings.Join(commands, " "))
 		command = exec.Command(s.shell, args...) //nolint:gosec
 	}
-
-	command.Stdout = &b
-	command.Stderr = &eb
-
-	if err := command.Start(); err != nil {
-		return nil //nolint:nilerr
-	}
-
-	go func() {
-		if err := command.Wait(); err != nil {
-			s.err = err
-		}
-
-		s.result = b.Bytes()
-		s.errorResult = eb.Bytes()
-		s.exitCode = command.ProcessState.ExitCode()
-		s.completed = true
-		finishedQueue <- s.id
-		close(s.finish)
-	}()
-
-	return nil
+	return command
 }
 
 func isWhiteString(str string) bool {

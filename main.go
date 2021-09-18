@@ -79,6 +79,7 @@ Options:
   -t, --no-title             turn off header
   --shell                    shell (default "sh")
   --shell-options            additional shell options
+  --pty                      run on pty (experimental)
 
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)
