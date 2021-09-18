@@ -146,6 +146,9 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.general.noTitle, _ = flagSet.GetBool("no-title")
 	conf.general.pty = v.GetBool("general.pty")
 
+	v.SetDefault("color.border", "gray")
+	v.SetDefault("color.title", "gray")
+
 	conf.theme.Theme = tview.Theme{
 		PrimitiveBackgroundColor:    tcell.GetColor(v.GetString("color.background")),
 		ContrastBackgroundColor:     tcell.GetColor(v.GetString("color.contrast_background")),
