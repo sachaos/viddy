@@ -71,6 +71,14 @@ After [enabling the community repository](https://wiki.alpinelinux.org/wiki/Enab
 apk add viddy
 ```
 
+### [asdf version manager](https://asdf-vm.com)
+
+```shell
+asdf plugin add viddy
+asdf install viddy latest
+asdf global viddy latest
+```
+
 ### Go
 
 ```shell
