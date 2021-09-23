@@ -69,6 +69,7 @@ type Viddy struct {
 	isNoTitle        bool
 	isShowDiff       bool
 	isEditQuery      bool
+	unfold           bool
 	pty              bool
 
 	query string
@@ -125,6 +126,7 @@ func NewViddy(conf *config) *Viddy {
 		isShowDiff: conf.general.differences,
 		isNoTitle:  conf.general.noTitle,
 		isDebug:    conf.general.debug,
+		unfold:     conf.general.unfold,
 		pty:        conf.general.pty,
 
 		currentID:        -1,
@@ -396,7 +398,7 @@ func (v *Viddy) Run() error {
 	b.SetDynamicColors(true)
 	b.SetRegions(true)
 	b.GetInnerRect()
-	b.SetWrap(false)
+	b.SetWrap(!v.unfold)
 	v.bodyView = b
 
 	t := tview.NewTextView()
