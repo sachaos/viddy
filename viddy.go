@@ -533,7 +533,7 @@ func (v *Viddy) Run() error {
 			any = true
 		}
 
-		if event.Key() == tcell.KeyEsc {
+		if event.Key() == tcell.KeyEsc || event.Rune() == 'q' {
 			v.showHelpView = false
 			v.arrange()
 		}
@@ -659,7 +659,7 @@ func (v *Viddy) goToOldestOnTimeMachine() {
 	}
 }
 
-var helpTemplate = `Press ESC to go back
+var helpTemplate = `Press ESC or Q to go back
 
  [::b]Key Bindings[-:-:-]
 
