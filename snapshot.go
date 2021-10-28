@@ -124,7 +124,7 @@ func isWhiteString(str string) bool {
 }
 
 func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
-	src := tview.Escape(string(s.result))
+	src := string(s.result)
 
 	if isWhiteString(src) {
 		src = string(s.errorResult)
@@ -134,26 +134,23 @@ func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
 	}
 
 	if isShowDiff {
-		if s.diffPrepared {
-			src = DiffPrettyText(s.diff)
-		} else if err := s.compareFromBefore(); err == nil {
+		var err error
+		if !s.diffPrepared {
+			err = s.compareFromBefore()
+		}
+
+		if err == nil {
 			src = DiffPrettyText(s.diff)
 		}
 	}
 
-	var b bytes.Buffer
-	if _, err := io.Copy(tview.ANSIWriter(&b), strings.NewReader(src)); err != nil {
-		return err
-	}
-
-	var r io.Reader
 	if query != "" {
-		r = strings.NewReader(strings.ReplaceAll(b.String(), query, fmt.Sprintf(`[black:yellow]%s[-:-:-]`, query)))
-	} else {
-		r = &b
+		src = strings.ReplaceAll(src, query, color.New(color.BgYellow, color.FgBlack).Sprintf(query))
 	}
 
-	_, err := io.Copy(w, r)
+	src = tview.Escape(src)
+
+	_, err := io.Copy(tview.ANSIWriter(w), strings.NewReader(src))
 
 	return err
 }
