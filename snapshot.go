@@ -124,7 +124,7 @@ func isWhiteString(str string) bool {
 }
 
 func (s *Snapshot) render(w io.Writer, isShowDiff bool, query string) error {
-	src := string(s.result)
+	src := tview.Escape(string(s.result))
 
 	if isWhiteString(src) {
 		src = string(s.errorResult)
