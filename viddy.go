@@ -67,6 +67,7 @@ type Viddy struct {
 	isTimeMachine    bool
 	isSuspend        bool
 	isNoTitle        bool
+	isRingBell       bool
 	isShowDiff       bool
 	isEditQuery      bool
 	unfold           bool
@@ -123,6 +124,7 @@ func NewViddy(conf *config) *Viddy {
 		finishedQueue: make(chan int64),
 		diffQueue:     make(chan int64, 100),
 
+		isRingBell: conf.general.bell,
 		isShowDiff: conf.general.differences,
 		isNoTitle:  conf.general.noTitle,
 		isDebug:    conf.general.debug,
@@ -194,6 +196,12 @@ func (v *Viddy) diffQueueHandler() {
 				v.diffQueue <- id
 
 				return
+			}
+
+			if v.isRingBell {
+				if s.diffAdditionCount > 0 || s.diffDeletionCount > 0 {
+					fmt.Print(string(byte(7)))
+				}
 			}
 
 			r, ok := v.historyRows[id]
@@ -330,7 +338,10 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Suspend %s  Diff %s", convertToOnOrOff(v.isSuspend), convertToOnOrOff(v.isShowDiff)))
+	v.statusView.SetText(fmt.Sprintf("Suspend %s  Diff %s  Bell %s",
+		convertToOnOrOff(v.isSuspend),
+		convertToOnOrOff(v.isShowDiff),
+		convertToOnOrOff(v.isRingBell)))
 }
 
 func convertToOnOrOff(on bool) string {
@@ -381,7 +392,7 @@ func (v *Viddy) arrange() {
 		bottom.AddItem(tview.NewBox(), 0, 1, false)
 	}
 
-	bottom.AddItem(v.statusView, 18, 1, false)
+	bottom.AddItem(v.statusView, 25, 1, false)
 
 	flex.AddItem(bottom, 1, 1, false)
 
@@ -541,6 +552,8 @@ func (v *Viddy) Run() error {
 		switch event.Rune() {
 		case 's':
 			v.isSuspend = !v.isSuspend
+		case 'b':
+			v.isRingBell = !v.isRingBell
 		case 'd':
 			v.SetIsShowDiff(!v.isShowDiff)
 		case 't':
@@ -665,11 +678,12 @@ var helpTemplate = `Press ESC or Q to go back
 
    [::u]General[-:-:-]     
 
-   Toggle time machine mode : [yellow]SPACE[-:-:-]
-   Toggle suspend execution : [yellow]s[-:-:-]
-   Toggle diff              : [yellow]d[-:-:-]
-   Toggle header display    : [yellow]t[-:-:-]
-   Toggle help view         : [yellow]?[-:-:-]
+   Toggle time machine mode  : [yellow]SPACE[-:-:-]
+   Toggle suspend execution  : [yellow]s[-:-:-]
+   Toggle ring terminal bell : [yellow]b[-:-:-]
+   Toggle diff               : [yellow]d[-:-:-]
+   Toggle header display     : [yellow]t[-:-:-]
+   Toggle help view          : [yellow]?[-:-:-]
 
    [::u]Pager[-:-:-]
 

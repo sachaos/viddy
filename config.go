@@ -40,6 +40,7 @@ type general struct {
 	shell        string
 	shellOptions string
 	debug        bool
+	bell         bool
 	differences  bool
 	noTitle      bool
 	pty          bool
@@ -78,6 +79,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet.BoolP("version", "v", false, "output version information and exit")
 
 	// general
+	flagSet.BoolP("bell", "b", false, "ring terminal bell changes between updates")
 	flagSet.BoolP("differences", "d", false, "highlight changes between updates")
 	flagSet.BoolP("no-title", "t", false, "turn off header")
 	flagSet.Bool("debug", false, "")
@@ -129,6 +131,10 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.bell", flagSet.Lookup("bell")); err != nil {
+		return nil, err
+	}
+
 	if err := v.BindPFlag("general.differences", flagSet.Lookup("differences")); err != nil {
 		return nil, err
 	}
@@ -148,6 +154,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
+	conf.general.bell, _ = flagSet.GetBool("bell")
 	conf.general.differences, _ = flagSet.GetBool("differences")
 	conf.general.noTitle, _ = flagSet.GetBool("no-title")
 	conf.general.unfold = v.GetBool("general.unfold")
