@@ -72,6 +72,7 @@ Usage:
  viddy [options] command
 
 Options:
+  -b, --bell                 ring terminal bell changes between updates
   -d, --differences          highlight changes between updates
   -n, --interval <interval>  seconds to wait between updates (default "2s")
   -p, --precise              attempt run command in precise intervals

@@ -25,6 +25,7 @@ func Test_newConfig(t *testing.T) {
 		general: general{
 			shell:        "sh",
 			shellOptions: "",
+			bell:         false,
 			differences:  false,
 			noTitle:      false,
 			debug:        false,

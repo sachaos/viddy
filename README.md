@@ -95,6 +95,7 @@ Download from [release page](https://github.com/sachaos/viddy/releases).
 |-----------|--------------------------------------------|
 | SPACE     | Toggle time machine mode                   |
 | s         | Toggle suspend execution                   |
+| b         | Toggle ring terminal bell                  |
 | d         | Toggle diff                                |
 | t         | Toggle header display                      |
 | ?         | Toggle help view                           |
