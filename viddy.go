@@ -328,13 +328,16 @@ func (v *Viddy) renderSnapshot(id int64) error {
 		return errCannotCreateSnapshot
 	}
 
-	v.bodyView.Clear()
+	bw := v.bodyView.BatchWriter()
+	defer bw.Close()
+
+	bw.Clear()
 
 	if !s.completed {
 		return errNotCompletedYet
 	}
 
-	return s.render(v.bodyView, v.isShowDiff, v.query)
+	return s.render(bw, v.isShowDiff, v.query)
 }
 
 func (v *Viddy) UpdateStatusView() {
