@@ -157,7 +157,6 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
-
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
