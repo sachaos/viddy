@@ -29,6 +29,7 @@ func Test_newConfig(t *testing.T) {
 			differences:  false,
 			noTitle:      false,
 			debug:        false,
+			maxHistory:   1000,
 		},
 		theme: theme{
 			Theme: tview.Theme{
