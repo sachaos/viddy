@@ -279,9 +279,11 @@ func (v *Viddy) queueHandler() {
 				v.Lock()
 				v.idList = append(v.idList, id)
 				rc := v.historyView.GetRowCount()
+
 				if !v.isTimeMachine && v.maxHistory > 0 && rc > v.maxHistory {
 					count := rc - v.maxHistory
 					ids := v.idList[:count]
+
 					for i, id := range ids {
 						v.snapshots.Delete(id)
 						delete(v.historyRows, id)
