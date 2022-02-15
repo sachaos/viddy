@@ -82,6 +82,7 @@ Options:
   --shell-options            additional shell options
   --unfold                   unfold command result
   --pty                      run on pty (experimental, not for Windows)
+  --max-history              max history length, 0 is infinite (experimental, default "1000")
 
  -h, --help     display this help and exit
  -v, --version  output version information and exit`)

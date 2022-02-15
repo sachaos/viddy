@@ -72,6 +72,7 @@ type Viddy struct {
 	isEditQuery      bool
 	unfold           bool
 	pty              bool
+	maxHistory       int
 
 	query string
 
@@ -124,6 +125,7 @@ func NewViddy(conf *config) *Viddy {
 		finishedQueue: make(chan int64),
 		diffQueue:     make(chan int64, 100),
 
+		maxHistory: conf.general.maxHistory,
 		isRingBell: conf.general.bell,
 		isShowDiff: conf.general.differences,
 		isNoTitle:  conf.general.noTitle,
@@ -276,6 +278,17 @@ func (v *Viddy) queueHandler() {
 
 				v.Lock()
 				v.idList = append(v.idList, id)
+				rc := v.historyView.GetRowCount()
+				if !v.isTimeMachine && v.maxHistory > 0 && rc > v.maxHistory {
+					count := rc - v.maxHistory
+					ids := v.idList[:count]
+					for i, id := range ids {
+						v.snapshots.Delete(id)
+						delete(v.historyRows, id)
+						v.historyView.RemoveRow(rc - 1 - i)
+					}
+				}
+
 				v.Unlock()
 
 				if !v.isTimeMachine {

@@ -45,6 +45,7 @@ type general struct {
 	noTitle      bool
 	pty          bool
 	unfold       bool
+	maxHistory   int
 }
 
 type theme struct {
@@ -86,6 +87,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet.String("shell", "", "shell (default \"sh\")")
 	flagSet.String("shell-options", "", "additional shell options")
 	flagSet.Bool("unfold", false, "unfold")
+	flagSet.Int("max-history", 1000, "maximum history length (experimental)")
 	flagSet.Bool("pty", false, "run on pty (experimental)")
 
 	flagSet.SetInterspersed(false)
@@ -151,14 +153,20 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.max_history", flagSet.Lookup("max-history")); err != nil {
+		return nil, err
+	}
+
+
 	conf.general.debug = v.GetBool("general.debug")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
-	conf.general.bell, _ = flagSet.GetBool("bell")
-	conf.general.differences, _ = flagSet.GetBool("differences")
-	conf.general.noTitle, _ = flagSet.GetBool("no-title")
+	conf.general.bell = v.GetBool("general.bell")
+	conf.general.differences = v.GetBool("general.differences")
+	conf.general.noTitle = v.GetBool("general.no_title")
 	conf.general.unfold = v.GetBool("general.unfold")
 	conf.general.pty = v.GetBool("general.pty")
+	conf.general.maxHistory = v.GetInt("general.max_history")
 
 	v.SetDefault("color.border", "gray")
 	v.SetDefault("color.title", "gray")
