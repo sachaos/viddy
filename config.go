@@ -37,14 +37,15 @@ type runtimeConfig struct {
 }
 
 type general struct {
-	shell        string
-	shellOptions string
-	debug        bool
-	bell         bool
-	differences  bool
-	noTitle      bool
-	pty          bool
-	unfold       bool
+	shell         string
+	shellOptions  string
+	debug         bool
+	bell          bool
+	differences   bool
+	noTitle       bool
+	pty           bool
+	unfold        bool
+	accessibility bool
 }
 
 type theme struct {
@@ -127,6 +128,8 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 
 	v.SetDefault("general.shell", "sh")
 
+	v.SetDefault("general.accessibility", false)
+
 	if err := v.BindPFlag("general.shell_options", flagSet.Lookup("shell-options")); err != nil {
 		return nil, err
 	}
@@ -159,6 +162,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.general.noTitle, _ = flagSet.GetBool("no-title")
 	conf.general.unfold = v.GetBool("general.unfold")
 	conf.general.pty = v.GetBool("general.pty")
+	conf.general.accessibility = v.GetBool("general.accessibility")
 
 	v.SetDefault("color.border", "gray")
 	v.SetDefault("color.title", "gray")
