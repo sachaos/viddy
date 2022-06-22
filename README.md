@@ -138,7 +138,7 @@ background = "white" # Default value is inherit from terminal color.
 ## What is "viddy" ?
 
 "viddy" is Nadsat word meaning to see.
-Nadsat is fictional argot of gangs in the violence movie "A Clockwork Orange".
+Nadsat is fictional argot of gangs in the violent book and movie "A Clockwork Orange".
 
 ## Credits
 
