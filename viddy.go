@@ -348,18 +348,22 @@ func (v *Viddy) renderSnapshot(id int64) error {
 }
 
 func (v *Viddy) UpdateStatusView() {
-	v.statusView.SetText(fmt.Sprintf("Suspend %s  Diff %s  Bell %s",
-		convertToOnOrOff(v.isSuspend),
-		convertToOnOrOff(v.isShowDiff),
-		convertToOnOrOff(v.isRingBell)))
+	a := v.isAccessibility
+	v.statusView.SetText(fmt.Sprintf("%s  %s  %s",
+		convertToOnOrOff(v.isSuspend, "Suspend", a),
+		convertToOnOrOff(v.isShowDiff, "Diff", a),
+		convertToOnOrOff(v.isRingBell, "Bell", a)))
 }
 
-func convertToOnOrOff(on bool) string {
+func convertToOnOrOff(on bool, statusStr string, accessibility bool) string {
 	if on {
-		return "[green]◯[reset]"
+		if accessibility {
+			return fmt.Sprintf("[black:white]%s ⬤[-:-]", statusStr)
+		}
+		return fmt.Sprintf("%s [green]◯[reset]", statusStr)
 	}
 
-	return "[red]◯[reset]"
+	return fmt.Sprintf("%s [red]◯[-]", statusStr)
 }
 
 func (v *Viddy) arrange() {
@@ -687,7 +691,7 @@ var helpTemplate = `Press ESC or Q to go back
 
  [::b]Key Bindings[-:-:-]
 
-   [::u]General[-:-:-]     
+   [::u]General[-:-:-]
 
    Toggle time machine mode  : [yellow]SPACE[-:-:-]
    Toggle suspend execution  : [yellow]s[-:-:-]
