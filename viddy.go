@@ -83,8 +83,13 @@ type Viddy struct {
 type ViddyIntervalMode string
 
 var (
-	ViddyIntervalModeClockwork  ViddyIntervalMode = "clockwork"
-	ViddyIntervalModePrecise    ViddyIntervalMode = "precise"
+	// ViddyIntervalModeClockwork is mode to run command in precise intervals forcibly.
+	ViddyIntervalModeClockwork ViddyIntervalMode = "clockwork"
+
+	// ViddyIntervalModePrecise is mode to run command in precise intervals like `watch -p`.
+	ViddyIntervalModePrecise ViddyIntervalMode = "precise"
+
+	// ViddyIntervalModeSequential is mode to run command sequential like `watch` command.
 	ViddyIntervalModeSequential ViddyIntervalMode = "sequential"
 
 	errCannotCreateSnapshot = errors.New("cannot find the snapshot")
@@ -406,6 +411,7 @@ func (v *Viddy) arrange() {
 	v.app.SetRoot(flex, true)
 }
 
+// Run is entry point to run viddy.
 //nolint: funlen,gocognit,cyclop
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
