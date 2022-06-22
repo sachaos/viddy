@@ -23,7 +23,7 @@ Viddy well, gopher. Viddy well.
     * diff highlight.
 * Time machine mode. 😎
     * Rewind like video.
-    * Go to the past, and back to the future.
+    * Go to the past, and back to the present.
 * See output in pager.
 * Vim like keymaps.
 * Search text.
