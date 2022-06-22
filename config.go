@@ -359,3 +359,14 @@ func keyOf(key string) (tcell.Key, error) {
 
 	return 0, keyNotFoundError{}
 }
+
+func isFlagSet(str string, flagSet *pflag.FlagSet) bool {
+	res := false
+	flagSet.Visit(func (f *pflag.Flag) {
+		if f.Name == str {
+			res = true
+		}
+	})
+
+	return res
+}
