@@ -75,9 +75,10 @@ type Viddy struct {
 
 	query string
 
-	isDebug      bool
-	showLogView  bool
-	showHelpView bool
+	isDebug         bool
+	showLogView     bool
+	showHelpView    bool
+	isAccessibility bool
 }
 
 type ViddyIntervalMode string
@@ -135,6 +136,7 @@ func NewViddy(conf *config) *Viddy {
 		isDebug:    conf.general.debug,
 		unfold:     conf.general.unfold,
 		pty:        conf.general.pty,
+		isAccessibility: conf.general.accessibility,
 
 		currentID:        -1,
 		latestFinishedID: -1,
