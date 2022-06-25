@@ -14,3 +14,8 @@ linters:
     - maligned
     - exhaustive
     - gomoddirectives
+    - exhaustruct
+    - forcetypeassert
+    - predeclared
+    - nilnil
+    - varnamelen
