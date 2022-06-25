@@ -72,8 +72,13 @@ type keymapping struct {
 func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet := pflag.NewFlagSet("", pflag.ExitOnError)
 
+	defaultInterval := os.Getenv("WATCH_INTERVAL")
+	if defaultInterval == "" {
+		defaultInterval = "2s"
+	}
+
 	// runtimeConfig
-	flagSet.StringP("interval", "n", "2s", "seconds to wait between updates")
+	flagSet.StringP("interval", "n", defaultInterval, "seconds to wait between updates")
 	flagSet.BoolP("precise", "p", false, "attempt run command in precise intervals")
 	flagSet.BoolP("clockwork", "c", false, "run command in precise intervals forcibly")
 	flagSet.BoolP("help", "h", false, "display this help and exit")
@@ -97,13 +102,9 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 
 	var conf config
 
-	intervalStr, _ := flagSet.GetString("interval")
-	isIntervalFlagSet := isFlagSet("interval", flagSet)
-	if !isIntervalFlagSet {
-		if value, ok := os.LookupEnv("WATCH_INTERVAL"); ok {
-			fmt.Println("ok")
-			intervalStr = fmt.Sprintf("%ss", value)
-		}
+	intervalStr, err := flagSet.GetString("interval")
+	if err != nil {
+		return nil, err
 	}
 
 	interval, err := parseInterval(intervalStr)
@@ -366,15 +367,4 @@ func keyOf(key string) (tcell.Key, error) {
 	}
 
 	return 0, keyNotFoundError{}
-}
-
-func isFlagSet(str string, flagSet *pflag.FlagSet) bool {
-	res := false
-	flagSet.Visit(func (f *pflag.Flag) {
-		if f.Name == str {
-			res = true
-		}
-	})
-
-	return res
 }
