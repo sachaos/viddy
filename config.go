@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -97,6 +98,13 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	var conf config
 
 	intervalStr, _ := flagSet.GetString("interval")
+	isIntervalFlagSet := isFlagSet("interval", flagSet)
+	if !isIntervalFlagSet {
+		if value, ok := os.LookupEnv("WATCH_INTERVAL"); ok {
+			fmt.Println("ok")
+			intervalStr = fmt.Sprintf("%ss", value)
+		}
+	}
 
 	interval, err := parseInterval(intervalStr)
 	if err != nil {
@@ -358,4 +366,15 @@ func keyOf(key string) (tcell.Key, error) {
 	}
 
 	return 0, keyNotFoundError{}
+}
+
+func isFlagSet(str string, flagSet *pflag.FlagSet) bool {
+	res := false
+	flagSet.Visit(func (f *pflag.Flag) {
+		if f.Name == str {
+			res = true
+		}
+	})
+
+	return res
 }
