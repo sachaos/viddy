@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/sachaos/viddy/pkg/generator"
 	"html/template"
 	"io"
 	"os"
@@ -107,11 +108,11 @@ func NewViddy(conf *config) *Viddy {
 
 	switch conf.runtime.mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(begin, newSnap, conf.runtime.interval)
+		snapshotQueue = generator.ClockSnapshot(begin, newSnap, conf.runtime.interval)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(newSnap, conf.runtime.interval)
+		snapshotQueue = generator.SequentialSnapshot(newSnap, conf.runtime.interval)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(newSnap, conf.runtime.interval)
+		snapshotQueue = generator.PreciseSnapshot(newSnap, conf.runtime.interval)
 	}
 
 	return &Viddy{

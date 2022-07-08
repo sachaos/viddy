@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package run
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 )
 
 //nolint:unparam
-func (s *Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error {
+func (s *main.Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error {
 	s.start = time.Now()
 	defer func() {
 		s.end = time.Now()

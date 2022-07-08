@@ -4,18 +4,11 @@ package main
 
 import (
 	"bytes"
-	"io"
-	"time"
-
 	"github.com/creack/pty"
+	"io"
 )
 
 func (s *Snapshot) run(finishedQueue chan<- int64, width int, isPty bool) error {
-	s.start = time.Now()
-	defer func() {
-		s.end = time.Now()
-	}()
-
 	var b, eb bytes.Buffer
 
 	commands := []string{s.command}
