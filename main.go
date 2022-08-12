@@ -6,6 +6,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/fatih/color"
+	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
 	"github.com/spf13/viper"
 	"github.com/tcnksm/go-latest"
@@ -32,6 +33,8 @@ func printVersion() {
 }
 
 func main() {
+	runewidth.DefaultCondition.EastAsianWidth = false
+
 	v := viper.New()
 	v.SetConfigType("toml")
 	v.SetConfigName("viddy")
