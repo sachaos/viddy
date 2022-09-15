@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adrg/xdg"
 	"github.com/fatih/color"
-	"github.com/rivo/tview"
-	"github.com/spf13/viper"
+	"github.com/sachaos/viddy/viddy"
 	"github.com/tcnksm/go-latest"
 )
 
@@ -32,31 +30,16 @@ func printVersion() {
 }
 
 func main() {
-	v := viper.New()
-	v.SetConfigType("toml")
-	v.SetConfigName("viddy")
-	v.AddConfigPath(xdg.ConfigHome)
-
-	_ = v.ReadInConfig()
-
-	conf, err := newConfig(v, os.Args[1:])
-	if conf.runtime.help {
+	if os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h" {
 		help()
 		os.Exit(0)
 	}
 
-	if conf.runtime.version {
+	if os.Args[1] == "version" || os.Args[1] == "--version" || os.Args[1] == "-v" {
 		printVersion()
 	}
 
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	tview.Styles = conf.theme.Theme
-
-	app := NewViddy(conf)
+	app := viddy.NewPreconfigedViddy(os.Args[1:])
 
 	if err := app.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

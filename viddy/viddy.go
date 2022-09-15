@@ -1,4 +1,4 @@
-package main
+package viddy
 
 import (
 	"bytes"
@@ -14,9 +14,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/adrg/xdg"
 	"github.com/gdamore/tcell/v2"
 	"github.com/moby/term"
 	"github.com/rivo/tview"
+	"github.com/spf13/viper"
 )
 
 type HistoryRow struct {
@@ -139,6 +141,26 @@ func NewViddy(conf *config) *Viddy {
 		currentID:        -1,
 		latestFinishedID: -1,
 	}
+}
+
+func NewPreconfigedViddy(args []string) *Viddy {
+	v := viper.New()
+	v.SetConfigType("toml")
+	v.SetConfigName("viddy")
+	v.AddConfigPath(xdg.ConfigHome)
+
+	_ = v.ReadInConfig()
+
+	conf, err := newConfig(v, args)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	tview.Styles = conf.theme.Theme
+	preConfigedViddy := NewViddy(conf)
+	return preConfigedViddy
 }
 
 func (v *Viddy) ShowLogView(b bool) {
@@ -412,7 +434,7 @@ func (v *Viddy) arrange() {
 }
 
 // Run is entry point to run viddy.
-//nolint: funlen,gocognit,cyclop
+// nolint: funlen,gocognit,cyclop
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)

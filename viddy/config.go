@@ -1,15 +1,15 @@
-package main
+package viddy
 
 import (
 	"errors"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/spf13/cast"
 	"github.com/spf13/pflag"
