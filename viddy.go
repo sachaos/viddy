@@ -553,9 +553,25 @@ func (v *Viddy) Run() error {
 			any = true
 		}
 
-		if event.Key() == tcell.KeyEsc || event.Rune() == 'q' {
+		if event.Key() == tcell.KeyEsc {
 			v.showHelpView = false
 			v.arrange()
+		}
+
+		if event.Rune() == 'q' {
+			if (v.showHelpView) {  // if it's help mode, just go back
+				v.showHelpView = false
+				v.arrange()
+			} else {  // it's not help view, so just quit
+				v.app.Stop()
+				os.Exit(0)
+			}
+		}
+
+		// quit viddy from any view
+		if event.Rune() == 'Q' {
+			v.app.Stop()
+			os.Exit(0)
 		}
 
 		switch event.Rune() {
