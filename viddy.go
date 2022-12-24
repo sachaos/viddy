@@ -681,7 +681,7 @@ func (v *Viddy) goToOldestOnTimeMachine() {
 	}
 }
 
-var helpTemplate = `Press ESC or Q to go back
+var helpTemplate = `Press ESC or q to go back
 
  [::b]Key Bindings[-:-:-]
 
@@ -693,6 +693,7 @@ var helpTemplate = `Press ESC or Q to go back
    Toggle diff               : [yellow]d[-:-:-]
    Toggle header display     : [yellow]t[-:-:-]
    Toggle help view          : [yellow]?[-:-:-]
+   Quit Viddy                : [yellow]Q[-:-:-]
 
    [::u]Pager[-:-:-]
 
