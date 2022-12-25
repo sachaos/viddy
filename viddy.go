@@ -567,6 +567,9 @@ func (v *Viddy) Run() error {
 			v.SetIsShowDiff(!v.isShowDiff)
 		case 't':
 			v.SetIsNoTitle(!v.isNoTitle)
+		case 'u':
+			b.SetWrap(v.unfold)
+			v.unfold = !v.unfold
 		case 'x':
 			if v.isDebug {
 				v.ShowLogView(!v.showLogView)
@@ -693,6 +696,7 @@ var helpTemplate = `Press ESC or Q to go back
    Toggle diff               : [yellow]d[-:-:-]
    Toggle header display     : [yellow]t[-:-:-]
    Toggle help view          : [yellow]?[-:-:-]
+   Toggle unfold             : [yellow]u[-:-:-]
 
    [::u]Pager[-:-:-]
 
