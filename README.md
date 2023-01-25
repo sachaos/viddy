@@ -50,6 +50,20 @@ brew install viddy
 sudo port install viddy
 ```
 
+### Windows
+
+#### [Scoop](https://scoop.sh/)
+
+To install Viddy on Windows, first install the Scoop package manager, and then run the commands below.
+
+**NOTE**: The git package is required in order to add additional Scoop "buckets".
+
+```
+scoop install git
+scoop bucket add extras
+scoop install extras/viddy
+```
+
 ### Linux
 
 ```shell
