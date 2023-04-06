@@ -295,7 +295,7 @@ type parseKeyStrokeError struct {
 }
 
 func (e parseKeyStrokeError) Error() string {
-	return fmt.Sprintf("connot parse key: %q", e.key)
+	return fmt.Sprintf("cannot parse key: %q", e.key)
 }
 
 // ParseKeyStroke parse string describing key.
