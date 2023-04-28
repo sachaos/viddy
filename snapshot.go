@@ -168,7 +168,7 @@ func DiffPrettyText(diffs []diffmatchpatch.Diff) string {
 				if unicode.IsSpace(c) {
 					_, _ = buff.WriteRune(c)
 				} else {
-					_, _ = buff.WriteString(color.New(color.BgGreen).Sprintf(string(c)))
+					_, _ = buff.WriteString(color.New(color.BgBlue, color.FgWhite).Sprintf(string(c)))
 				}
 			}
 		case diffmatchpatch.DiffEqual:
