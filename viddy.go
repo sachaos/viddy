@@ -412,7 +412,7 @@ func (v *Viddy) arrange() {
 }
 
 // Run is entry point to run viddy.
-//nolint: funlen,gocognit,cyclop
+// nolint: funlen,gocognit,cyclop
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
@@ -559,10 +559,10 @@ func (v *Viddy) Run() error {
 		}
 
 		if event.Rune() == 'q' {
-			if (v.showHelpView) {  // if it's help mode, just go back
+			if v.showHelpView { // if it's help mode, just go back
 				v.showHelpView = false
 				v.arrange()
-			} else {  // it's not help view, so just quit
+			} else { // it's not help view, so just quit
 				v.app.Stop()
 				os.Exit(0)
 			}
@@ -615,8 +615,6 @@ func (v *Viddy) Run() error {
 	})
 
 	v.UpdateStatusView()
-
-	app.EnableMouse(true)
 
 	v.app = app
 	v.arrange()
