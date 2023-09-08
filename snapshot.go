@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ import (
 )
 
 var dmp = diffmatchpatch.New()
+var controlSequencePattern = regexp.MustCompile(`\x1b\[[0-9;]+m`)
 
 type Snapshot struct {
 	id int64
@@ -164,11 +166,12 @@ func DiffPrettyText(diffs []diffmatchpatch.Diff) string {
 
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			for _, c := range text {
+			uncoloredText := controlSequencePattern.ReplaceAllString(text, "")
+			for _, c := range uncoloredText {
 				if unicode.IsSpace(c) {
 					_, _ = buff.WriteRune(c)
 				} else {
-					_, _ = buff.WriteString(color.New(color.FgBlack).Sprintf(color.New(color.BgGreen).Sprintf(string(c))))
+					_, _ = buff.WriteString(color.New(color.FgBlack, color.BgGreen).Sprintf(string(c)))
 				}
 			}
 		case diffmatchpatch.DiffEqual:
