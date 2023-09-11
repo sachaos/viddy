@@ -153,14 +153,14 @@ func (v *Viddy) SetIsNoTitle(b bool) {
 
 func (v *Viddy) SetIsShowDiff(b bool) {
 	v.isShowDiff = b
-	v.setSelection(v.currentID)
+	v.setSelection(v.currentID, -1)
 	v.arrange()
 }
 
 func (v *Viddy) SetIsTimeMachine(b bool) {
 	v.isTimeMachine = b
 	if !v.isTimeMachine {
-		v.setSelection(v.latestFinishedID)
+		v.setSelection(v.latestFinishedID, -1)
 	}
 
 	v.arrange()
@@ -250,9 +250,9 @@ func (v *Viddy) queueHandler() {
 				if ls == nil || s.start.After(ls.start) {
 					v.latestFinishedID = id
 					if !v.isTimeMachine {
-						v.setSelection(id)
+						v.setSelection(id, -1)
 					} else {
-						v.setSelection(v.currentID)
+						v.setSelection(v.currentID, -1)
 					}
 				}
 			case id := <-v.queue:
@@ -284,16 +284,19 @@ func (v *Viddy) queueHandler() {
 				v.Unlock()
 
 				if !v.isTimeMachine {
-					v.setSelection(v.latestFinishedID)
+					v.setSelection(v.latestFinishedID, -1)
 				} else {
-					v.setSelection(v.currentID)
+					v.setSelection(v.currentID, -1)
 				}
 			}
 		}()
 	}
 }
 
-func (v *Viddy) setSelection(id int64) {
+// setSelection selects the given row in the history view. If row is -1, it will
+// attempt to select the row corresponding to the given id (or default to the
+// latest row if id doesn't exist).
+func (v *Viddy) setSelection(id int64, row int) {
 	if id == -1 {
 		return
 	}
@@ -305,14 +308,16 @@ func (v *Viddy) setSelection(id int64) {
 		v.historyView.SetSelectable(true, false)
 	}
 
-	v.RLock()
-	index := sort.Search(len(v.idList), func(i int) bool {
-		return v.idList[i] >= id
-	})
-	i := len(v.idList) - index - 1
-	v.RUnlock()
+	if row == -1 {
+		v.RLock()
+		index := sort.Search(len(v.idList), func(i int) bool {
+			return v.idList[i] >= id
+		})
+		row = len(v.idList) - index - 1
+		v.RUnlock()
+	}
 
-	v.historyView.Select(i, 0)
+	v.historyView.Select(row, 0)
 	v.currentID = id
 	unix := v.begin + id*int64(time.Millisecond)
 	v.timeView.SetText(time.Unix(unix/int64(time.Second), unix%int64(time.Second)).String())
@@ -639,7 +644,7 @@ func (v *Viddy) goToRow(row int) {
 		id, err = strconv.ParseInt(cell.Text, 10, 64)
 	)
 	if err == nil { // if _no_ error
-		v.setSelection(id)
+		v.setSelection(id, row)
 	}
 }
 
