@@ -38,14 +38,15 @@ type runtimeConfig struct {
 }
 
 type general struct {
-	shell        string
-	shellOptions string
-	debug        bool
-	bell         bool
-	differences  bool
-	noTitle      bool
-	pty          bool
-	unfold       bool
+	shell          string
+	shellOptions   string
+	debug          bool
+	bell           bool
+	differences    bool
+	skipEmptyDiffs bool
+	noTitle        bool
+	pty            bool
+	unfold         bool
 }
 
 type theme struct {
@@ -87,6 +88,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	// general
 	flagSet.BoolP("bell", "b", false, "ring terminal bell changes between updates")
 	flagSet.BoolP("differences", "d", false, "highlight changes between updates")
+	flagSet.BoolP("skip-empty-diffs", "s", false, "skip snapshots with no changes (+0 -0) in history")
 	flagSet.BoolP("no-title", "t", false, "turn off header")
 	flagSet.Bool("debug", false, "")
 	flagSet.String("shell", "", "shell (default \"sh\")")
@@ -148,6 +150,10 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.skip_empty_diffs", flagSet.Lookup("skip-empty-diffs")); err != nil {
+		return nil, err
+	}
+
 	if err := v.BindPFlag("general.no_title", flagSet.Lookup("no-title")); err != nil {
 		return nil, err
 	}
@@ -165,6 +171,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	conf.general.shellOptions = v.GetString("general.shell_options")
 	conf.general.bell, _ = flagSet.GetBool("bell")
 	conf.general.differences, _ = flagSet.GetBool("differences")
+	conf.general.skipEmptyDiffs, _ = flagSet.GetBool("skip-empty-diffs")
 	conf.general.noTitle, _ = flagSet.GetBool("no-title")
 	conf.general.unfold = v.GetBool("general.unfold")
 	conf.general.pty = v.GetBool("general.pty")

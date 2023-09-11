@@ -7,7 +7,6 @@ import (
 	"html/template"
 	"io"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,12 +42,12 @@ type Viddy struct {
 	timeView     *tview.TextView
 	historyView  *tview.Table
 	historyRows  map[int64]*HistoryRow
-	sync.RWMutex
 
 	// bWidth store current pty width.
 	bWidth atomic.Value
 
-	idList []int64
+	// id -> row count (as of just after the snapshot was added).
+	historyRowCount map[int64]int
 
 	bodyView    *tview.TextView
 	app         *tview.Application
@@ -69,6 +68,7 @@ type Viddy struct {
 	isNoTitle        bool
 	isRingBell       bool
 	isShowDiff       bool
+	skipEmptyDiffs   bool
 	isEditQuery      bool
 	unfold           bool
 	pty              bool
@@ -124,17 +124,20 @@ func NewViddy(conf *config) *Viddy {
 		snapshots:   sync.Map{},
 		historyRows: map[int64]*HistoryRow{},
 
+		historyRowCount: map[int64]int{},
+
 		snapshotQueue: snapshotQueue,
 		queue:         make(chan int64),
 		finishedQueue: make(chan int64),
 		diffQueue:     make(chan int64, 100),
 
-		isRingBell: conf.general.bell,
-		isShowDiff: conf.general.differences,
-		isNoTitle:  conf.general.noTitle,
-		isDebug:    conf.general.debug,
-		unfold:     conf.general.unfold,
-		pty:        conf.general.pty,
+		isRingBell:     conf.general.bell,
+		isShowDiff:     conf.general.differences,
+		skipEmptyDiffs: conf.general.skipEmptyDiffs,
+		isNoTitle:      conf.general.noTitle,
+		isDebug:        conf.general.debug,
+		unfold:         conf.general.unfold,
+		pty:            conf.general.pty,
 
 		currentID:        -1,
 		latestFinishedID: -1,
@@ -183,6 +186,26 @@ func (v *Viddy) startRunner() {
 	}
 }
 
+func (v *Viddy) updateSelection() {
+	if !v.isTimeMachine {
+		v.setSelection(v.latestFinishedID, -1)
+	} else {
+		v.setSelection(v.currentID, -1)
+	}
+}
+
+func (v *Viddy) addSnapshotToView(id int64, r *HistoryRow) {
+	v.historyView.InsertRow(0)
+	v.historyView.SetCell(0, 0, r.id)
+	v.historyView.SetCell(0, 1, r.addition)
+	v.historyView.SetCell(0, 2, r.deletion)
+	v.historyView.SetCell(0, 3, r.exitCode)
+
+	v.historyRowCount[id] = v.historyView.GetRowCount()
+
+	v.updateSelection()
+}
+
 func (v *Viddy) diffQueueHandler() {
 	for {
 		func() {
@@ -203,10 +226,12 @@ func (v *Viddy) diffQueueHandler() {
 				return
 			}
 
-			if v.isRingBell {
-				if s.diffAdditionCount > 0 || s.diffDeletionCount > 0 {
+			if s.diffAdditionCount > 0 || s.diffDeletionCount > 0 {
+				if v.isRingBell {
 					fmt.Print(string(byte(7)))
 				}
+			} else if v.skipEmptyDiffs {
+				return
 			}
 
 			r, ok := v.historyRows[id]
@@ -214,6 +239,11 @@ func (v *Viddy) diffQueueHandler() {
 				return
 			}
 
+			// if skipEmptyDiffs is true, queueHandler wouldn't have added the
+			// snapshot to view, so we need to add it here.
+			if v.skipEmptyDiffs {
+				v.addSnapshotToView(id, r)
+			}
 			r.addition.SetText("+" + strconv.Itoa(s.diffAdditionCount))
 			r.deletion.SetText("-" + strconv.Itoa(s.diffDeletionCount))
 		}()
@@ -249,11 +279,7 @@ func (v *Viddy) queueHandler() {
 				ls := v.getSnapShot(v.latestFinishedID)
 				if ls == nil || s.start.After(ls.start) {
 					v.latestFinishedID = id
-					if !v.isTimeMachine {
-						v.setSelection(id, -1)
-					} else {
-						v.setSelection(v.currentID, -1)
-					}
+					v.updateSelection()
 				}
 			case id := <-v.queue:
 				if v.isSuspend {
@@ -266,27 +292,31 @@ func (v *Viddy) queueHandler() {
 				deletionCell := tview.NewTableCell("").SetTextColor(tcell.ColorRed)
 				exitCodeCell := tview.NewTableCell("").SetTextColor(tcell.ColorYellow)
 
-				v.historyRows[s.id] = &HistoryRow{
+				r := &HistoryRow{
 					id:       idCell,
 					addition: additionCell,
 					deletion: deletionCell,
 					exitCode: exitCodeCell,
 				}
+				v.historyRows[s.id] = r
 
-				v.historyView.InsertRow(0)
-				v.historyView.SetCell(0, 0, idCell)
-				v.historyView.SetCell(0, 1, additionCell)
-				v.historyView.SetCell(0, 2, deletionCell)
-				v.historyView.SetCell(0, 3, exitCodeCell)
-
-				v.Lock()
-				v.idList = append(v.idList, id)
-				v.Unlock()
-
-				if !v.isTimeMachine {
-					v.setSelection(v.latestFinishedID, -1)
-				} else {
-					v.setSelection(v.currentID, -1)
+				// if skipEmptyDiffs is true, we need to check if the snapshot
+				// is empty before adding it to the view (in diffQueueHandler).
+				//
+				// This means we're trading off two things:
+				//
+				// 1. We're not showing the snapshot in history view until the
+				//    command finishes running, which means it's not possible
+				//    to see partial output.
+				// 2. Order of the snapshots in history view is lost
+				//    (in non-sequential modes), as some commands could finish
+				//    running quicker than others for whatever reason.
+				//
+				// It of course is possible to address these issues by adding
+				// all snapshots to the history view and then removing the empty
+				// ones but it unnecessarily complicates the implementation.
+				if !v.skipEmptyDiffs {
+					v.addSnapshotToView(id, r)
 				}
 			}
 		}()
@@ -309,12 +339,7 @@ func (v *Viddy) setSelection(id int64, row int) {
 	}
 
 	if row == -1 {
-		v.RLock()
-		index := sort.Search(len(v.idList), func(i int) bool {
-			return v.idList[i] >= id
-		})
-		row = len(v.idList) - index - 1
-		v.RUnlock()
+		row = v.historyView.GetRowCount() - v.historyRowCount[id]
 	}
 
 	v.historyView.Select(row, 0)
