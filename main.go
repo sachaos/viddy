@@ -77,6 +77,7 @@ Usage:
 Options:
   -b, --bell                 ring terminal bell changes between updates
   -d, --differences          highlight changes between updates
+  -s, --skip-empty-diffs     skip snapshots with no changes (+0 -0) in history
   -n, --interval <interval>  seconds to wait between updates (default "2s")
   -p, --precise              attempt run command in precise intervals
   -c, --clockwork            run command in precise intervals forcibly

@@ -47,8 +47,9 @@ type Snapshot struct {
 	finish chan<- struct{}
 }
 
-//nolint:lll
 // NewSnapshot returns Snapshot object.
+//
+//nolint:lll
 func NewSnapshot(id int64, command string, args []string, shell string, shellOpts string, before *Snapshot, finish chan<- struct{}) *Snapshot {
 	return &Snapshot{
 		id:      id,
