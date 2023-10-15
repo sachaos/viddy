@@ -101,7 +101,16 @@ func NewViddy(conf *config) *Viddy {
 	begin := time.Now().UnixNano()
 
 	newSnap := func(id int64, before *Snapshot, finish chan<- struct{}) *Snapshot {
-		return NewSnapshot(id, conf.runtime.cmd, conf.runtime.args, conf.general.shell, conf.general.shellOptions, before, finish)
+		return NewSnapshot(
+			id,
+			conf.runtime.cmd,
+			conf.runtime.args,
+			conf.general.noShell,
+			conf.general.shell,
+			conf.general.shellOptions,
+			before,
+			finish,
+		)
 	}
 
 	var (
