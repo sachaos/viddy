@@ -244,13 +244,14 @@ func (v *Viddy) diffQueueHandler() {
 			if v.skipEmptyDiffs {
 				v.addSnapshotToView(id, r)
 			}
+
 			r.addition.SetText("+" + strconv.Itoa(s.diffAdditionCount))
 			r.deletion.SetText("-" + strconv.Itoa(s.diffDeletionCount))
 		}()
 	}
 }
 
-//nolint:funlen,gocognit,cyclop
+//nolint:funlen,cyclop
 func (v *Viddy) queueHandler() {
 	for {
 		func() {
@@ -442,7 +443,8 @@ func (v *Viddy) arrange() {
 }
 
 // Run is entry point to run viddy.
-// nolint: funlen,gocognit,cyclop
+//
+//nolint:funlen,gocognit,cyclop,gocyclo,maintidx
 func (v *Viddy) Run() error {
 	b := tview.NewTextView()
 	b.SetDynamicColors(true)
@@ -664,10 +666,12 @@ func (v *Viddy) goToRow(row int) {
 	} else if count := v.historyView.GetRowCount(); row >= count {
 		row = count - 1
 	}
+
 	var (
 		cell    = v.historyView.GetCell(row, 0)
 		id, err = strconv.ParseInt(cell.Text, 10, 64)
 	)
+
 	if err == nil { // if _no_ error
 		v.setSelection(id, row)
 	}
