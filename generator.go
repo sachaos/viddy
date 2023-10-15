@@ -4,8 +4,10 @@ import "time"
 
 type newSnapFunc func(int64, *Snapshot, chan<- struct{}) *Snapshot
 
-func ClockSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
+func ClockSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) (<-chan *Snapshot, chan<- bool) {
 	c := make(chan *Snapshot)
+	isSuspended := false
+	isSuspendedQueue := make(chan bool)
 
 	go func() {
 		var s *Snapshot
@@ -13,6 +15,15 @@ func ClockSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-c
 		t := time.Tick(interval)
 
 		for now := range t {
+			select {
+			case isSuspended = <-isSuspendedQueue:
+			default:
+			}
+
+			if isSuspended {
+				continue
+			}
+
 			finish := make(chan struct{})
 			id := (now.UnixNano() - begin) / int64(time.Millisecond)
 			s = newSnap(id, s, finish)
@@ -20,11 +31,13 @@ func ClockSnapshot(begin int64, newSnap newSnapFunc, interval time.Duration) <-c
 		}
 	}()
 
-	return c
+	return c, isSuspendedQueue
 }
 
-func PreciseSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
+func PreciseSnapshot(newSnap newSnapFunc, interval time.Duration) (<-chan *Snapshot, chan<- bool) {
 	c := make(chan *Snapshot)
+	isSuspended := false
+	isSuspendedQueue := make(chan bool)
 
 	go func() {
 		var s *Snapshot
@@ -32,6 +45,17 @@ func PreciseSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Snapsh
 		begin := time.Now().UnixNano()
 
 		for {
+			select {
+			case isSuspended = <-isSuspendedQueue:
+			default:
+			}
+
+			if isSuspended {
+				time.Sleep(interval)
+
+				continue
+			}
+
 			finish := make(chan struct{})
 			start := time.Now()
 			id := (start.UnixNano() - begin) / int64(time.Millisecond)
@@ -52,11 +76,13 @@ func PreciseSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Snapsh
 		}
 	}()
 
-	return c
+	return c, isSuspendedQueue
 }
 
-func SequentialSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Snapshot {
+func SequentialSnapshot(newSnap newSnapFunc, interval time.Duration) (<-chan *Snapshot, chan<- bool) {
 	c := make(chan *Snapshot)
+	isSuspended := false
+	isSuspendedQueue := make(chan bool)
 
 	go func() {
 		var s *Snapshot
@@ -64,6 +90,17 @@ func SequentialSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Sna
 		begin := time.Now().UnixNano()
 
 		for {
+			select {
+			case isSuspended = <-isSuspendedQueue:
+			default:
+			}
+
+			if isSuspended {
+				time.Sleep(interval)
+
+				continue
+			}
+
 			finish := make(chan struct{})
 			id := (time.Now().UnixNano() - begin) / int64(time.Millisecond)
 			s = newSnap(id, s, finish)
@@ -75,5 +112,5 @@ func SequentialSnapshot(newSnap newSnapFunc, interval time.Duration) <-chan *Sna
 		}
 	}()
 
-	return c
+	return c, isSuspendedQueue
 }

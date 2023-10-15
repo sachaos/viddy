@@ -56,10 +56,11 @@ type Viddy struct {
 	statusView  *tview.TextView
 	queryEditor *tview.InputField
 
-	snapshotQueue <-chan *Snapshot
-	queue         chan int64
-	finishedQueue chan int64
-	diffQueue     chan int64
+	snapshotQueue    <-chan *Snapshot
+	isSuspendedQueue chan<- bool
+	queue            chan int64
+	finishedQueue    chan int64
+	diffQueue        chan int64
 
 	currentID        int64
 	latestFinishedID int64
@@ -103,15 +104,18 @@ func NewViddy(conf *config) *Viddy {
 		return NewSnapshot(id, conf.runtime.cmd, conf.runtime.args, conf.general.shell, conf.general.shellOptions, before, finish)
 	}
 
-	var snapshotQueue <-chan *Snapshot
+	var (
+		snapshotQueue    <-chan *Snapshot
+		isSuspendedQueue chan<- bool
+	)
 
 	switch conf.runtime.mode {
 	case ViddyIntervalModeClockwork:
-		snapshotQueue = ClockSnapshot(begin, newSnap, conf.runtime.interval)
+		snapshotQueue, isSuspendedQueue = ClockSnapshot(begin, newSnap, conf.runtime.interval)
 	case ViddyIntervalModeSequential:
-		snapshotQueue = SequentialSnapshot(newSnap, conf.runtime.interval)
+		snapshotQueue, isSuspendedQueue = SequentialSnapshot(newSnap, conf.runtime.interval)
 	case ViddyIntervalModePrecise:
-		snapshotQueue = PreciseSnapshot(newSnap, conf.runtime.interval)
+		snapshotQueue, isSuspendedQueue = PreciseSnapshot(newSnap, conf.runtime.interval)
 	}
 
 	return &Viddy{
@@ -126,10 +130,11 @@ func NewViddy(conf *config) *Viddy {
 
 		historyRowCount: map[int64]int{},
 
-		snapshotQueue: snapshotQueue,
-		queue:         make(chan int64),
-		finishedQueue: make(chan int64),
-		diffQueue:     make(chan int64, 100),
+		snapshotQueue:    snapshotQueue,
+		isSuspendedQueue: isSuspendedQueue,
+		queue:            make(chan int64),
+		finishedQueue:    make(chan int64),
+		diffQueue:        make(chan int64, 100),
 
 		isRingBell:     conf.general.bell,
 		isShowDiff:     conf.general.differences,
@@ -253,7 +258,7 @@ func (v *Viddy) diffQueueHandler() {
 	}
 }
 
-//nolint:funlen,cyclop
+//nolint:funlen
 func (v *Viddy) queueHandler() {
 	for {
 		func() {
@@ -285,10 +290,6 @@ func (v *Viddy) queueHandler() {
 					v.updateSelection()
 				}
 			case id := <-v.queue:
-				if v.isSuspend {
-					return
-				}
-
 				s := v.getSnapShot(id)
 				idCell := tview.NewTableCell(strconv.FormatInt(s.id, 10)).SetTextColor(tview.Styles.SecondaryTextColor)
 				additionCell := tview.NewTableCell("").SetTextColor(tcell.ColorGreen)
@@ -611,6 +612,7 @@ func (v *Viddy) Run() error {
 		switch event.Rune() {
 		case 's':
 			v.isSuspend = !v.isSuspend
+			v.isSuspendedQueue <- v.isSuspend
 		case 'b':
 			v.isRingBell = !v.isRingBell
 		case 'd':
