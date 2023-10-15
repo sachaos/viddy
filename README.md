@@ -134,6 +134,7 @@ On macOS, the path is `~/Library/Application\ Support/viddy.toml`.
 
 ```toml
 [general]
+no_shell = false
 shell = "zsh"
 shell_options = ""
 

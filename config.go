@@ -38,6 +38,7 @@ type runtimeConfig struct {
 }
 
 type general struct {
+	noShell        bool
 	shell          string
 	shellOptions   string
 	debug          bool
@@ -91,6 +92,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	flagSet.BoolP("skip-empty-diffs", "s", false, "skip snapshots with no changes (+0 -0) in history")
 	flagSet.BoolP("no-title", "t", false, "turn off header")
 	flagSet.Bool("debug", false, "")
+	flagSet.Bool("no-shell", false, "do not use a shell even if --shell is set")
 	flagSet.String("shell", "", "shell (default \"sh\")")
 	flagSet.String("shell-options", "", "additional shell options")
 	flagSet.Bool("unfold", false, "unfold")
@@ -132,6 +134,10 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 		return nil, err
 	}
 
+	if err := v.BindPFlag("general.no_shell", flagSet.Lookup("no-shell")); err != nil {
+		return nil, err
+	}
+
 	if err := v.BindPFlag("general.shell", flagSet.Lookup("shell")); err != nil {
 		return nil, err
 	}
@@ -167,6 +173,7 @@ func newConfig(v *viper.Viper, args []string) (*config, error) {
 	}
 
 	conf.general.debug = v.GetBool("general.debug")
+	conf.general.noShell = v.GetBool("general.no_shell")
 	conf.general.shell = v.GetString("general.shell")
 	conf.general.shellOptions = v.GetString("general.shell_options")
 	conf.general.bell, _ = flagSet.GetBool("bell")

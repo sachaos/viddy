@@ -24,6 +24,7 @@ type Snapshot struct {
 	command string
 	args    []string
 
+	noShell   bool
 	shell     string
 	shellOpts string
 
@@ -50,12 +51,13 @@ type Snapshot struct {
 // NewSnapshot returns Snapshot object.
 //
 //nolint:lll
-func NewSnapshot(id int64, command string, args []string, shell string, shellOpts string, before *Snapshot, finish chan<- struct{}) *Snapshot {
+func NewSnapshot(id int64, command string, args []string, noShell bool, shell string, shellOpts string, before *Snapshot, finish chan<- struct{}) *Snapshot {
 	return &Snapshot{
 		id:      id,
 		command: command,
 		args:    args,
 
+		noShell:   noShell,
 		shell:     shell,
 		shellOpts: shellOpts,
 
@@ -97,22 +99,25 @@ func (s *Snapshot) compareFromBefore() error {
 	return nil
 }
 
+//nolint:gosec
 func (s *Snapshot) prepareCommand(commands []string) *exec.Cmd {
-	var command *exec.Cmd
-
 	if runtime.GOOS == "windows" {
 		cmdStr := strings.Join(commands, " ")
 		compSec := os.Getenv("COMSPEC")
-		command = exec.Command(compSec, "/c", cmdStr)
-	} else {
-		var args []string
-		args = append(args, strings.Fields(s.shellOpts)...)
-		args = append(args, "-c")
-		args = append(args, strings.Join(commands, " "))
-		command = exec.Command(s.shell, args...) //nolint:gosec
+
+		return exec.Command(compSec, "/c", cmdStr)
 	}
 
-	return command
+	if s.noShell {
+		return exec.Command(commands[0], commands[1:]...)
+	}
+
+	var args []string
+	args = append(args, strings.Fields(s.shellOpts)...)
+	args = append(args, "-c")
+	args = append(args, strings.Join(commands, " "))
+
+	return exec.Command(s.shell, args...)
 }
 
 func isWhiteString(str string) bool {
