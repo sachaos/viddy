@@ -19,3 +19,13 @@ linters:
     - predeclared
     - nilnil
     - varnamelen
+    - nosnakecase
+    - varcheck
+    - interfacer
+    - structcheck
+    - golint
+    - scopelint
+    - deadcode
+    - ifshort
+    - rowserrcheck
+    - wastedassign
