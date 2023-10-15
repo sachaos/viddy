@@ -164,6 +164,8 @@ func (v *Viddy) SetIsTimeMachine(b bool) {
 	v.isTimeMachine = b
 	if !v.isTimeMachine {
 		v.setSelection(v.latestFinishedID, -1)
+	} else {
+		v.goToNowOnTimeMachine()
 	}
 
 	v.arrange()
