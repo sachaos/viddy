@@ -108,10 +108,10 @@ Download from [release page](https://github.com/sachaos/viddy/releases).
 | key       |                                            |
 |-----------|--------------------------------------------|
 | SPACE     | Toggle time machine mode                   |
-| s         | Toggle suspend execution                   |
-| b         | Toggle ring terminal bell                  |
-| d         | Toggle diff                                |
-| t         | Toggle header display                      |
+| s         | Toggle <ins>s</ins>uspend execution                   |
+| b         | Toggle ring terminal <ins>b</ins>ell                  |
+| d         | Toggle <ins>d</ins>iff                                |
+| t         | Toggle header/<ins>t</ins>itle display                      |
 | ?         | Toggle help view                           |
 | /         | Search text                                |
 | j         | Pager: next line                           |
