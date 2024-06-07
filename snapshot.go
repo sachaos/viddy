@@ -101,7 +101,7 @@ func (s *Snapshot) compareFromBefore() error {
 
 //nolint:gosec
 func (s *Snapshot) prepareCommand(commands []string) *exec.Cmd {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" && s.shell != "pwsh" {
 		cmdStr := strings.Join(commands, " ")
 		compSec := os.Getenv("COMSPEC")
 
