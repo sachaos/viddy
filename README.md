@@ -137,6 +137,7 @@ On macOS, the path is `~/Library/Application\ Support/viddy.toml`.
 no_shell = false
 shell = "zsh"
 shell_options = ""
+skip_empty_diffs = false
 
 [keymap]
 timemachine_go_to_past = "Down"
