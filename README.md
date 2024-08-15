@@ -14,6 +14,15 @@ Viddy well, gopher. Viddy well.
 <img src="images/demo.gif" width="100%" alt="viddy" title="viddy" />
 </p>
 
+## Viddy v1.0.0 RC is available
+
+Viddy was originally a program written in Go, but starting from version 1.0.0, it is being reimplemented in Rust. For more details, please see [the announcement](https://github.com/sachaos/viddy/issues/117). We are currently distributing a release candidate (RC) version of v1.0.0.
+
+Since the build methods will change for each package management system, please take note and make the necessary adjustments.
+
+We would greatly appreciate it if as many people as possible could test the RC version. If you are willing to help, we would be very grateful if you could install and test the RC version. Please refer to [the RC installation section](#install-v100-rc-version) for details.
+
+If you find any bugs or areas for improvement, feel free to submit an issue.
 
 ## Features
 
@@ -28,7 +37,6 @@ Viddy well, gopher. Viddy well.
 * Vim like keymaps.
 * Search text.
 * Suspend and restart execution.
-* Run command in precise intervals forcibly.
 * Support shell alias
     * See detail https://github.com/sachaos/viddy/issues/2#issuecomment-904002053
 * Customize keymappings.
@@ -97,6 +105,24 @@ asdf global viddy latest
 
 Download from [release page](https://github.com/sachaos/viddy/releases).
 
+## Install v1.0.0 RC version
+
+### Mac
+
+```shell
+brew install sachaos/tap/viddy-rc
+```
+
+### Linux
+
+```shell
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.0-rc.1/viddy-v1.0.0-rc.1-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+```
+
+### Other
+
+Download from [release page](https://github.com/sachaos/viddy/releases/tag/v1.0.0-rc.1).
+
 ## Keymaps
 
 | key       |                                            |
@@ -122,6 +148,9 @@ Download from [release page](https://github.com/sachaos/viddy/releases).
 | Shift-N   | (Time machine mode) Go to current position |
 
 ## Configuration
+
+Viddy can be used without any configuration.
+However, if you want to customize the keybindings or default behavior, you can do so.
 
 Install your config file on `$XDG_CONFIG_HOME/viddy.toml`
 On macOS, the path is `~/Library/Application\ Support/viddy.toml`.
