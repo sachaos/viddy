@@ -93,12 +93,6 @@ asdf install viddy latest
 asdf global viddy latest
 ```
 
-### Go
-
-```shell
-go install github.com/sachaos/viddy@latest
-```
-
 ### Other
 
 Download from [release page](https://github.com/sachaos/viddy/releases).
