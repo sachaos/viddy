@@ -1,0 +1,59 @@
+{
+  "keybindings": {
+    "All": {
+      "<q>": "Quit", // Quit the application
+      "<Ctrl-d>": "Quit", // Another way to quit
+      "<Ctrl-c>": "Quit", // Yet another way to quit
+      "<Ctrl-z>": "Suspend", // Suspend the application
+      "<space>": "SwitchTimemachineMode",
+      "<Shift-j>": "GoToPast",
+      "<Shift-k>": "GoToFuture",
+      "<h>": "ScrollLeft",
+      "<l>": "ScrollRight",
+      "<f>": "SwitchFold",
+      "<d>": "SwitchDiff",
+      "<Shift-d>": "SwitchDeletionDiff",
+      "<j>": "ResultScrollDown",
+      "<k>": "ResultScrollUp",
+      "<Ctrl-f>": "ResultPageDown",
+      "<Ctrl-b>": "ResultPageUp",
+      "<Ctrl-d>": "ResultHalfPageDown",
+      "<Ctrl-u>": "ResultHalfPageUp",
+      "<g><g>": "TopOfPage",
+      "<Shift-g>": "BottomOfPage",
+      "<Shift-f>": "GoToMoreFuture",
+      "<Shift-b>": "GoToMorePast",
+      "<Shift-o>": "GoToOldest",
+      "<Shift-n>": "GoToCurrent",
+      "<b>": "SwitchBell",
+      "<s>": "SwitchSuspend",
+      "</>": "EnterSearchMode",
+      "<t>": "SwitchNoTitle",
+      "<?>": "ShowHelp",
+    },
+    "Search": {
+      "<Ctrl-d>": "Quit", // Another way to quit
+      "<Ctrl-c>": "Quit",
+      "<enter>": "ExecuteSearch",
+      "<esc>": "ExitSearchMode",
+    },
+    "Help": {
+      "<j>": "HelpScrollDown",
+      "<k>": "HelpScrollUp",
+      "<Ctrl-f>": "HelpPageDown",
+      "<Ctrl-b>": "HelpPageUp",
+      "<Ctrl-d>": "HelpHalfPageDown",
+      "<Ctrl-u>": "HelpHalfPageUp",
+      "<esc>": "ExitHelp",
+      "<q>": "ExitHelp",
+    },
+  },
+  "styles": {
+    "All": {
+      "border": "rgb111",
+      "title": "rgb111",
+      "scrollbar": "rgb111",
+      "search_highlight": "black on yellow"
+    }
+  }
+}
