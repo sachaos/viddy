@@ -10,13 +10,13 @@ use crate::{
     action::Action,
     config::{Config, RuntimeConfig},
     exec::exec,
-    store::{Record, MemoryStore},
+    store::{MemoryStore, Record, Store},
     types::ExecutionId,
 };
 
-pub async fn run_executor(
+pub async fn run_executor<S: Store + Send>(
     actions: mpsc::UnboundedSender<Action>,
-    mut store: MemoryStore,
+    mut store: S,
     runtime_config: RuntimeConfig,
     shell: Option<(String, Vec<String>)>,
     is_suspend: Arc<Mutex<bool>>,
@@ -88,9 +88,9 @@ pub async fn run_executor(
     }
 }
 
-pub async fn run_executor_precise(
+pub async fn run_executor_precise<S: Store + Send>(
     actions: mpsc::UnboundedSender<Action>,
-    mut store: MemoryStore,
+    mut store: S,
     runtime_config: RuntimeConfig,
     shell: Option<(String, Vec<String>)>,
     is_suspend: Arc<Mutex<bool>>,

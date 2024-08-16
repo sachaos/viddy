@@ -13,20 +13,10 @@ use tokio::{
 use tracing_subscriber::field::debug;
 
 use crate::{
-    action::{self, Action, DiffMode},
-    cli::Cli,
-    components::{fps::FpsCounter, home::Home, Component},
-    config::{Config, RuntimeConfig},
-    diff::{diff_and_mark, diff_and_mark_delete},
-    mode::Mode,
-    old_config::OldConfig,
-    runner::{run_executor, run_executor_precise},
-    search::search_and_mark,
-    termtext, tui,
-    types::ExecutionId,
+    action::{self, Action, DiffMode}, cli::Cli, components::{fps::FpsCounter, home::Home, Component}, config::{Config, RuntimeConfig}, diff::{diff_and_mark, diff_and_mark_delete}, mode::Mode, old_config::OldConfig, runner::{run_executor, run_executor_precise}, search::search_and_mark, store::Store, termtext, tui, types::ExecutionId
 };
 
-pub struct App {
+pub struct App<S: Store + Clone + Send + 'static> {
     pub config: Config,
     pub runtime_config: RuntimeConfig,
     pub tick_rate: f64,
@@ -38,6 +28,7 @@ pub struct App {
     pub last_tick_key_events: Vec<KeyEvent>,
     pub timemachine_mode: bool,
     pub search_query: Option<String>,
+    store: S,
     is_precise: bool,
     diff_mode: Option<DiffMode>,
     is_suspend: Arc<Mutex<bool>>,
@@ -49,8 +40,8 @@ pub struct App {
     shell: Option<(String, Vec<String>)>,
 }
 
-impl App {
-    pub fn new(cli: Cli) -> Result<Self> {
+impl<S: Store + Clone + Send> App<S> {
+    pub fn new(cli: Cli, store: S) -> Result<Self> {
         let runtime_config = RuntimeConfig {
             interval: cli.interval,
             command: cli.command,
@@ -108,6 +99,7 @@ impl App {
         let is_skip_empty_diffs = cli.is_skip_empty_diffs || default_skip_empty_diffs;
 
         Ok(Self {
+            store,
             tick_rate: 1.0,
             frame_rate: 20.0,
             components,
@@ -138,11 +130,10 @@ impl App {
     pub async fn run(&mut self) -> Result<()> {
         let (action_tx, mut action_rx) = mpsc::unbounded_channel();
 
-        let store = crate::store::MemoryStore::new();
         let executor_handle = if self.is_precise {
             tokio::spawn(run_executor_precise(
                 action_tx.clone(),
-                store.clone(),
+                self.store.clone(),
                 self.runtime_config.clone(),
                 self.shell.clone(),
                 self.is_suspend.clone(),
@@ -150,7 +141,7 @@ impl App {
         } else {
             tokio::spawn(run_executor(
                 action_tx.clone(),
-                store.clone(),
+                self.store.clone(),
                 self.runtime_config.clone(),
                 self.shell.clone(),
                 self.is_suspend.clone(),
@@ -283,7 +274,7 @@ impl App {
                     Action::ShowExecution(id, end_id) => {
                         let style =
                             termtext::convert_to_anstyle(self.config.get_style("background"));
-                        let record = store.get_record(id);
+                        let record = self.store.get_record(id);
                         let mut string = "".to_string();
                         if let Some(record) = record {
                             action_tx.send(Action::SetClock(record.start_time))?;
@@ -301,7 +292,7 @@ impl App {
                                 string = result.plain_text();
                                 if let Some(diff_mode) = self.diff_mode {
                                     if let Some(previous_id) = record.previous_id {
-                                        let previous_record = store.get_record(previous_id);
+                                        let previous_record = self.store.get_record(previous_id);
                                         if let Some(previous_record) = previous_record {
                                             let previous_result = termtext::Converter::new(style)
                                                 .convert(&previous_record.stdout);
@@ -346,7 +337,7 @@ impl App {
                     Action::SetTimemachineMode(timemachine_mode) => {
                         self.timemachine_mode = timemachine_mode;
                         if !timemachine_mode {
-                            if let Some(latest_id) = store.get_latest_id() {
+                            if let Some(latest_id) = self.store.get_latest_id() {
                                 action_tx.send(Action::ShowExecution(latest_id, latest_id))?;
                             }
                         }

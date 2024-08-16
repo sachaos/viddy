@@ -7,6 +7,12 @@ use chrono::{DateTime, Local};
 
 use crate::types::ExecutionId;
 
+pub trait Store {
+    fn add_record(&mut self, record: Record);
+    fn get_record(&self, id: ExecutionId) -> Option<Record>;
+    fn get_latest_id(&self) -> Option<ExecutionId>;
+}
+
 #[derive(Debug, Clone)]
 pub struct Record {
     pub id: ExecutionId,
@@ -39,15 +45,17 @@ impl MemoryStore {
             })),
         }
     }
+}
 
-    pub fn add_record(&mut self, record: Record) {
+impl Store for MemoryStore {
+    fn add_record(&mut self, record: Record) {
         if let Ok(mut data) = self.data.write() {
             data.latest_id = Some(record.id);
             data.records.insert(record.id, record);
         }
     }
 
-    pub fn get_record(&self, id: ExecutionId) -> Option<Record> {
+    fn get_record(&self, id: ExecutionId) -> Option<Record> {
         if let Ok(data) = self.data.read() {
             data.records.get(&id).cloned()
         } else {
@@ -55,7 +63,7 @@ impl MemoryStore {
         }
     }
 
-    pub fn get_latest_id(&self) -> Option<ExecutionId> {
+    fn get_latest_id(&self) -> Option<ExecutionId> {
         if let Ok(data) = self.data.read() {
             data.latest_id
         } else {
