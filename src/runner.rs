@@ -10,7 +10,7 @@ use crate::{
     action::Action,
     config::{Config, RuntimeConfig},
     exec::exec,
-    store::{MemoryStore, Record, Store},
+    store::{Record, Store},
     types::ExecutionId,
 };
 

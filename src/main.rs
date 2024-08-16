@@ -38,7 +38,7 @@ async fn tokio_main() -> Result<()> {
 
     let args = Cli::parse();
     let interval = Duration::from(args.interval);
-    let store = store::MemoryStore::new();
+    let store = store::memory::MemoryStore::new();
     let mut app = App::new(args, store)?;
     app.run().await?;
 
