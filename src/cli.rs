@@ -7,6 +7,12 @@ use serde_with::serde_as;
 
 use crate::utils::version;
 
+#[cfg(not(target_os = "windows"))]
+const SHELL_HELP: &str = "Shell [default: sh]";
+
+#[cfg(target_os = "windows")]
+const SHELL_HELP: &str = "Shell [default: cmd]";
+
 #[serde_as]
 #[derive(Parser, Debug, Clone)]
 #[command(author, version = version(), about)]
@@ -54,7 +60,7 @@ pub struct Cli {
     )]
     pub is_unfold: bool,
 
-    #[arg(long = "shell", help = "Shell [default: sh]")]
+    #[arg(long = "shell", help = SHELL_HELP)]
     pub shell: Option<String>,
 
     #[arg(
