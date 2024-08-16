@@ -20,20 +20,20 @@ pub struct Record {
 }
 
 #[derive(Debug)]
-struct StoreData {
+struct MemoryStoreData {
     records: HashMap<ExecutionId, Record>,
     latest_id: Option<ExecutionId>,
 }
 
 #[derive(Clone, Debug)]
-pub struct Store {
-    data: Arc<RwLock<StoreData>>,
+pub struct MemoryStore {
+    data: Arc<RwLock<MemoryStoreData>>,
 }
 
-impl Store {
+impl MemoryStore {
     pub fn new() -> Self {
         Self {
-            data: Arc::new(RwLock::new(StoreData {
+            data: Arc::new(RwLock::new(MemoryStoreData {
                 records: HashMap::new(),
                 latest_id: None,
             })),

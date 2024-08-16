@@ -138,7 +138,7 @@ impl App {
     pub async fn run(&mut self) -> Result<()> {
         let (action_tx, mut action_rx) = mpsc::unbounded_channel();
 
-        let store = crate::store::Store::new();
+        let store = crate::store::MemoryStore::new();
         let executor_handle = if self.is_precise {
             tokio::spawn(run_executor_precise(
                 action_tx.clone(),
