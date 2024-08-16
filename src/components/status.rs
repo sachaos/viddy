@@ -60,7 +60,7 @@ impl Component for Status {
 
     fn draw(&mut self, f: &mut Frame<'_>, area: Rect) -> Result<()> {
         let enabled_style = Style::default().fg(Color::White).bold();
-        let disabled_style = Style::default().fg(Color::DarkGray);
+        let disabled_style = self.config.get_style("secondary_text");
 
         let mut status = vec![Span::styled(
             "[F]old",

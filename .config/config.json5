@@ -50,6 +50,8 @@
   },
   "styles": {
     "All": {
+      "secondary_text": "rgb111",
+      "timemachine_selector": "white on rgb111",
       "border": "rgb111",
       "title": "rgb111",
       "scrollbar": "rgb111",

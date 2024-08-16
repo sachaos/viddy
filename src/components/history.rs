@@ -72,6 +72,8 @@ impl History {
             id,
             start_time,
             self.runtime_config.interval,
+            self.config.get_style("timemachine_selector"),
+            self.config.get_style("secondary_text"),
         )));
         self.index.insert(id, Rc::clone(&item));
         self.items.push_front(item);
