@@ -1,3 +1,4 @@
+use color_eyre::Result;
 use std::{ops::Sub, sync::Arc};
 
 use dissimilar::{diff, Chunk};
@@ -14,15 +15,17 @@ use crate::{
     types::ExecutionId,
 };
 
-pub async fn run_executor<S: Store + Send>(
+pub async fn run_executor<S: Store>(
     actions: mpsc::UnboundedSender<Action>,
     mut store: S,
     runtime_config: RuntimeConfig,
     shell: Option<(String, Vec<String>)>,
     is_suspend: Arc<Mutex<bool>>,
-) {
-    let mut counter = 0;
+) -> Result<()> {
+    let latest_id = store.get_latest_id()?;
+    let mut counter = latest_id.map(|id| id.0 + 1).unwrap_or(0);
     loop {
+        counter += 1;
         if *is_suspend.lock().await {
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             continue;
@@ -46,9 +49,9 @@ pub async fn run_executor<S: Store + Send>(
         let utf8_stderr = String::from_utf8_lossy(&stderr).to_string();
         let end_time = chrono::Local::now();
 
-        let latest_id = store.get_latest_id();
+        let latest_id = store.get_latest_id()?;
         let diff = if let Some(latest_id) = latest_id {
-            if let Some(record) = store.get_record(latest_id) {
+            if let Some(record) = store.get_record(latest_id)? {
                 let old_stdout = String::from_utf8_lossy(&record.stdout).to_string();
                 Some(count_diff(&old_stdout, &utf8_stdout))
             } else {
@@ -76,27 +79,27 @@ pub async fn run_executor<S: Store + Send>(
             diff,
             previous_id: latest_id,
         };
-        store.add_record(record);
+        store.add_record(record)?;
 
         if let Err(e) = actions.send(Action::FinishExecution(id, start_time, diff, exit_code)) {
             eprintln!("Failed to send result: {:?}", e);
         }
-
-        counter += 1;
 
         tokio::time::sleep(runtime_config.interval.to_std().unwrap()).await;
     }
 }
 
-pub async fn run_executor_precise<S: Store + Send>(
+pub async fn run_executor_precise<S: Store>(
     actions: mpsc::UnboundedSender<Action>,
     mut store: S,
     runtime_config: RuntimeConfig,
     shell: Option<(String, Vec<String>)>,
     is_suspend: Arc<Mutex<bool>>,
-) {
-    let mut counter = 0;
+) -> Result<()> {
+    let latest_id = store.get_latest_id()?;
+    let mut counter = latest_id.map(|id| id.0 + 1).unwrap_or(0);
     loop {
+        counter += 1;
         let start_time = chrono::Local::now();
         if *is_suspend.lock().await {
             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
@@ -120,9 +123,9 @@ pub async fn run_executor_precise<S: Store + Send>(
         let utf8_stderr = String::from_utf8_lossy(&stderr).to_string();
         let end_time = chrono::Local::now();
 
-        let latest_id = store.get_latest_id();
+        let latest_id = store.get_latest_id()?;
         let diff = if let Some(latest_id) = latest_id {
-            if let Some(record) = store.get_record(latest_id) {
+            if let Some(record) = store.get_record(latest_id)? {
                 let old_stdout = String::from_utf8_lossy(&record.stdout).to_string();
                 Some(count_diff(&old_stdout, &utf8_stdout))
             } else {
@@ -150,13 +153,11 @@ pub async fn run_executor_precise<S: Store + Send>(
             diff,
             previous_id: latest_id,
         };
-        store.add_record(record);
+        store.add_record(record)?;
 
         if let Err(e) = actions.send(Action::FinishExecution(id, start_time, diff, exit_code)) {
             eprintln!("Failed to send result: {:?}", e);
         }
-
-        counter += 1;
 
         let elapased = chrono::Local::now().signed_duration_since(start_time);
         let sleep_time = runtime_config.interval.sub(elapased);

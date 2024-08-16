@@ -1,3 +1,4 @@
+use core::time;
 use std::sync::Arc;
 
 use anstyle::{Color, RgbColor, Style};
@@ -13,10 +14,21 @@ use tokio::{
 use tracing_subscriber::field::debug;
 
 use crate::{
-    action::{self, Action, DiffMode}, cli::Cli, components::{fps::FpsCounter, home::Home, Component}, config::{Config, RuntimeConfig}, diff::{diff_and_mark, diff_and_mark_delete}, mode::Mode, old_config::OldConfig, runner::{run_executor, run_executor_precise}, search::search_and_mark, store::Store, termtext, tui, types::ExecutionId
+    action::{self, Action, DiffMode},
+    cli::Cli,
+    components::{fps::FpsCounter, home::Home, Component},
+    config::{Config, RuntimeConfig},
+    diff::{diff_and_mark, diff_and_mark_delete},
+    mode::Mode,
+    old_config::OldConfig,
+    runner::{run_executor, run_executor_precise},
+    search::search_and_mark,
+    store::{self, RuntimeConfig as StoreRuntimeConfig, Store},
+    termtext, tui,
+    types::ExecutionId,
 };
 
-pub struct App<S: Store + Clone + Send + 'static> {
+pub struct App<S: Store> {
     pub config: Config,
     pub runtime_config: RuntimeConfig,
     pub tick_rate: f64,
@@ -28,7 +40,6 @@ pub struct App<S: Store + Clone + Send + 'static> {
     pub last_tick_key_events: Vec<KeyEvent>,
     pub timemachine_mode: bool,
     pub search_query: Option<String>,
-    store: S,
     is_precise: bool,
     diff_mode: Option<DiffMode>,
     is_suspend: Arc<Mutex<bool>>,
@@ -38,14 +49,39 @@ pub struct App<S: Store + Clone + Send + 'static> {
     is_skip_empty_diffs: bool,
     showing_execution_id: Option<ExecutionId>,
     shell: Option<(String, Vec<String>)>,
+    store: S,
+    read_only: bool,
 }
 
-impl<S: Store + Clone + Send> App<S> {
-    pub fn new(cli: Cli, store: S) -> Result<Self> {
-        let runtime_config = RuntimeConfig {
-            interval: cli.interval,
-            command: cli.command,
+impl<S: Store> App<S> {
+    pub fn new(cli: Cli, mut store: S, read_only: bool) -> Result<Self> {
+        let runtime_config = if read_only {
+            let store_runtime_config = store.get_runtime_config()?.unwrap_or_default();
+
+            RuntimeConfig {
+                interval: Duration::from_std(humantime::parse_duration(
+                    &store_runtime_config.interval,
+                )?)?,
+                command: store_runtime_config
+                    .command
+                    .split(' ')
+                    .map(|s| s.to_string())
+                    .collect(),
+            }
+        } else {
+            let runtime_config = RuntimeConfig {
+                interval: cli.interval,
+                command: cli.command.clone(),
+            };
+
+            let interval =
+                humantime::format_duration(cli.interval.to_std().unwrap_or_default()).to_string();
+            let command = cli.command.join(" ");
+            store.set_runtime_config(StoreRuntimeConfig { interval, command })?;
+
+            runtime_config
         };
+
         let diff_mode = match (cli.is_diff, cli.is_deletion_diff) {
             (true, false) => Some(DiffMode::Add),
             (false, true) => Some(DiffMode::Delete),
@@ -81,6 +117,7 @@ impl<S: Store + Clone + Send> App<S> {
             ))
         };
 
+        let timemachine_mode = false;
         let home = Home::new(
             config.clone(),
             runtime_config.clone(),
@@ -88,13 +125,14 @@ impl<S: Store + Clone + Send> App<S> {
             diff_mode,
             cli.is_bell,
             cli.is_no_title,
+            read_only,
+            timemachine_mode,
         );
         let mut components: Vec<Box<dyn Component>> = vec![Box::new(home)];
         if cli.is_debug {
             components.push(Box::new(FpsCounter::new()));
         }
 
-        log::debug!("{:?}", config.general);
         let default_skip_empty_diffs = config.general.skip_empty_diffs.unwrap_or_default();
         let is_skip_empty_diffs = cli.is_skip_empty_diffs || default_skip_empty_diffs;
 
@@ -104,12 +142,13 @@ impl<S: Store + Clone + Send> App<S> {
             frame_rate: 20.0,
             components,
             should_quit: false,
+            read_only,
             should_suspend: false,
             config,
             runtime_config,
             mode: Mode::All,
             last_tick_key_events: Vec::new(),
-            timemachine_mode: false,
+            timemachine_mode,
             search_query: None,
             is_precise: cli.is_precise,
             is_bell: cli.is_bell,
@@ -130,7 +169,27 @@ impl<S: Store + Clone + Send> App<S> {
     pub async fn run(&mut self) -> Result<()> {
         let (action_tx, mut action_rx) = mpsc::unbounded_channel();
 
-        let executor_handle = if self.is_precise {
+        let records = self.store.get_records()?;
+        for r in records {
+            action_tx.send(Action::StartExecution(r.id, r.start_time))?;
+            action_tx.send(Action::FinishExecution(
+                r.id,
+                r.end_time,
+                r.diff,
+                r.exit_code,
+            ))?;
+        }
+        if self.read_only {
+            action_tx.send(Action::SetTimemachineMode(true))?;
+        }
+
+        let executor_handle = if self.read_only {
+            tokio::spawn(async move {
+                loop {
+                    tokio::time::sleep(Duration::seconds(1).to_std().unwrap()).await;
+                }
+            })
+        } else if self.is_precise {
             tokio::spawn(run_executor_precise(
                 action_tx.clone(),
                 self.store.clone(),
@@ -262,7 +321,7 @@ impl<S: Store + Clone + Send> App<S> {
                             action_tx.send(Action::UpdateHistoryResult(id, diff, exit_code))?;
                         }
 
-                        if !self.timemachine_mode {
+                        if !self.timemachine_mode && !self.read_only {
                             action_tx.send(Action::ShowExecution(id, id))?;
                         }
                     }
@@ -274,7 +333,7 @@ impl<S: Store + Clone + Send> App<S> {
                     Action::ShowExecution(id, end_id) => {
                         let style =
                             termtext::convert_to_anstyle(self.config.get_style("background"));
-                        let record = self.store.get_record(id);
+                        let record = self.store.get_record(id)?;
                         let mut string = "".to_string();
                         if let Some(record) = record {
                             action_tx.send(Action::SetClock(record.start_time))?;
@@ -292,7 +351,7 @@ impl<S: Store + Clone + Send> App<S> {
                                 string = result.plain_text();
                                 if let Some(diff_mode) = self.diff_mode {
                                     if let Some(previous_id) = record.previous_id {
-                                        let previous_record = self.store.get_record(previous_id);
+                                        let previous_record = self.store.get_record(previous_id)?;
                                         if let Some(previous_record) = previous_record {
                                             let previous_result = termtext::Converter::new(style)
                                                 .convert(&previous_record.stdout);
@@ -336,10 +395,9 @@ impl<S: Store + Clone + Send> App<S> {
                     }
                     Action::SetTimemachineMode(timemachine_mode) => {
                         self.timemachine_mode = timemachine_mode;
-                        if !timemachine_mode {
-                            if let Some(latest_id) = self.store.get_latest_id() {
-                                action_tx.send(Action::ShowExecution(latest_id, latest_id))?;
-                            }
+                        if let Some(latest_id) = self.store.get_latest_id()? {
+                            log::debug!("Latest ID: {latest_id}");
+                            action_tx.send(Action::ShowExecution(latest_id, latest_id))?;
                         }
                     }
                     Action::ExecuteSearch => {
@@ -425,6 +483,12 @@ impl<S: Store + Clone + Send> App<S> {
                     };
                 }
             }
+
+            if executor_handle.is_finished() {
+                tui.stop()?;
+                break;
+            }
+
             if self.should_suspend {
                 tui.suspend()?;
                 action_tx.send(Action::Resume)?;
@@ -438,8 +502,14 @@ impl<S: Store + Clone + Send> App<S> {
                 break;
             }
         }
-        executor_handle.abort();
         tui.exit()?;
-        Ok(())
+
+        if !executor_handle.is_finished() {
+            log::debug!("Waiting for executor to finish");
+            executor_handle.abort();
+            return Ok(());
+        }
+
+        executor_handle.await?
     }
 }

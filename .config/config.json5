@@ -55,7 +55,8 @@
       "border": "rgb111",
       "title": "rgb111",
       "scrollbar": "rgb111",
-      "search_highlight": "black on yellow"
+      "search_highlight": "black on yellow",
+      "readonly": "bold yellow"
     }
   }
 }

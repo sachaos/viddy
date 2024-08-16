@@ -21,10 +21,11 @@ pub struct Status {
     diff_mode: Option<DiffMode>,
     is_suspend: bool,
     is_bell: bool,
+    read_only: bool,
 }
 
 impl Status {
-    pub fn new(is_fold: bool, diff_mode: Option<DiffMode>, is_bell: bool) -> Self {
+    pub fn new(is_fold: bool, diff_mode: Option<DiffMode>, is_bell: bool, read_only: bool) -> Self {
         Self {
             command_tx: None,
             config: Config::new().unwrap(),
@@ -32,6 +33,7 @@ impl Status {
             diff_mode,
             is_suspend: false,
             is_bell,
+            read_only,
         }
     }
 }
@@ -87,22 +89,30 @@ impl Component for Status {
         } else {
             status.push(Span::styled(" [D]iff±", disabled_style));
         };
-        status.push(Span::styled(
-            " [S]uspend",
-            if self.is_suspend {
-                enabled_style
-            } else {
-                disabled_style
-            },
-        ));
-        status.push(Span::styled(
-            " [B]ell",
-            if self.is_bell {
-                enabled_style
-            } else {
-                disabled_style
-            },
-        ));
+
+        if !self.read_only {
+            status.push(Span::styled(
+                " [S]uspend",
+                if self.is_suspend {
+                    enabled_style
+                } else {
+                    disabled_style
+                },
+            ));
+            status.push(Span::styled(
+                " [B]ell",
+                if self.is_bell {
+                    enabled_style
+                } else {
+                    disabled_style
+                },
+            ));
+        } else {
+            status.push(Span::styled(
+                " Read-only",
+                self.config.get_style("readonly"),
+            ));
+        }
 
         let line = Line::raw("").spans(status);
         let paragraph = Paragraph::new(line).alignment(Alignment::Right);

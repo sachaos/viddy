@@ -1,6 +1,6 @@
 [package]
 name = "viddy"
-version = "1.0.0-rc.0"
+version = "1.0.0-rc.2"
 edition = "2021"
 description = "A modern watch command"
 
@@ -32,7 +32,7 @@ libc = "0.2.155"
 log = "0.4.21"
 pretty_assertions = "1.4.0"
 ratatui = { version = "0.26.3", features = ["serde", "macros"] }
-rusqlite = { version = "0.32.1", features = ["bundled"] }
+rusqlite = { version = "0.32.1", features = ["bundled", "chrono"] }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 serde_with = { version = "3.8.1", features = ["chrono_0_4"] }
@@ -40,6 +40,8 @@ signal-hook = "0.3.17"
 similar = "2.5.0"
 strip-ansi-escapes = "0.2.0"
 strum = { version = "0.26.2", features = ["derive"] }
+tempdir = "0.3.7"
+tempfile = "3.12.0"
 tokio = { version = "1.38.0", features = ["full"] }
 tokio-util = "0.7.11"
 toml = "0.8.19"
