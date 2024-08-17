@@ -2,7 +2,7 @@ use chrono::{DateTime, Duration, Local};
 use ratatui::prelude::*;
 use tui_widget_list::{List, ListState, PreRender, PreRenderContext};
 
-use crate::types::ExecutionId;
+use crate::{config::Config, types::ExecutionId};
 
 #[derive(Debug, Clone)]
 pub struct HisotryItem {
@@ -14,10 +14,18 @@ pub struct HisotryItem {
     pub style: Style,
     pub interval: Duration,
     pub count: usize,
+    pub selector_style: Style,
+    pub secondary_text_style: Style,
 }
 
 impl HisotryItem {
-    pub fn new(id: ExecutionId, start_time: DateTime<Local>, duration: Duration) -> Self {
+    pub fn new(
+        id: ExecutionId,
+        start_time: DateTime<Local>,
+        duration: Duration,
+        selector_style: Style,
+        secondary_text_style: Style,
+    ) -> Self {
         Self {
             id,
             start_time,
@@ -27,6 +35,8 @@ impl HisotryItem {
             style: Style::default(),
             interval: duration,
             count: 1,
+            selector_style,
+            secondary_text_style,
         }
     }
 
@@ -44,9 +54,7 @@ impl HisotryItem {
 impl PreRender for HisotryItem {
     fn pre_render(&mut self, context: &PreRenderContext) -> u16 {
         if context.is_selected {
-            self.style = Style::default()
-                .bg(Color::DarkGray)
-                .fg(Color::Rgb(28, 28, 32));
+            self.style = self.selector_style;
         };
 
         1
@@ -56,7 +64,7 @@ impl PreRender for HisotryItem {
 impl Widget for HisotryItem {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let time_style = if self.is_running {
-            Style::default().fg(Color::DarkGray)
+            self.secondary_text_style
         } else {
             Style::default().fg(Color::White)
         };
@@ -69,7 +77,7 @@ impl Widget for HisotryItem {
         });
 
         if self.is_running {
-            spans.push(Span::raw(" Running").style(Style::default().fg(Color::DarkGray)));
+            spans.push(Span::raw(" Running").style(self.secondary_text_style));
             Line::from("")
                 .spans(spans)
                 .style(self.style)
@@ -86,9 +94,7 @@ impl Widget for HisotryItem {
             spans.push(exit_code);
         } else {
             match self.diff {
-                Some((0, 0)) => {
-                    spans.push(Span::styled(" ±0", Style::default().fg(Color::DarkGray)))
-                }
+                Some((0, 0)) => spans.push(Span::styled(" ±0", self.secondary_text_style)),
                 Some((diff_add, diff_delete)) => {
                     let add =
                         Span::styled(format!(" +{}", diff_add), Style::default().fg(Color::Green));
@@ -106,7 +112,7 @@ impl Widget for HisotryItem {
         if self.count > 1 {
             spans.push(Span::styled(
                 format!(" *{}", self.count),
-                Style::default().fg(Color::DarkGray),
+                self.secondary_text_style,
             ));
         }
 
