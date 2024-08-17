@@ -33,6 +33,8 @@ If you find any bugs or areas for improvement, feel free to submit an issue.
 * Time machine mode. 😎
     * Rewind like video.
     * Go to the past, and back to the future.
+* Look back history.
+    * Save and load history.
 * See output in pager.
 * Vim like keymaps.
 * Search text.
