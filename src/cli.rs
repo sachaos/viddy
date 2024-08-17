@@ -84,7 +84,7 @@ pub struct Cli {
     )]
     pub is_bell: bool,
 
-    #[arg(value_name = "COMMAND", num_args(1..), required = true, allow_hyphen_values = true, help = "Command to run")]
+    #[arg(value_name = "COMMAND", num_args(0..), allow_hyphen_values = true, help = "Command to run")]
     pub command: Vec<String>,
 
     #[arg(
@@ -97,6 +97,30 @@ pub struct Cli {
 
     #[arg(long = "debug")]
     pub is_debug: bool,
+
+    #[arg(
+        long = "save",
+        value_name = "FILE",
+        help = "Path to the backup file. If not provided, a temporary file will be created",
+        conflicts_with_all = ["disable_auto_save", "load"]
+    )]
+    pub save: Option<PathBuf>,
+
+    #[arg(
+        long = "disable_auto_save",
+        help = "Disable to save automatically",
+        conflicts_with_all = ["save", "load"]
+    )]
+    pub disable_auto_save: bool,
+
+    #[arg(
+        long = "load",
+        alias = "lookback",
+        value_name = "FILE",
+        help = "Path to the backup file",
+        conflicts_with_all = ["save", "disable_auto_save", "shell", "shell_options", "is_exec", "is_bell", "is_precise", "interval"]
+    )]
+    pub load: Option<PathBuf>,
 }
 
 fn parse_duration_from_str(s: &str) -> Result<Duration> {

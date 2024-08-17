@@ -1,3 +1,4 @@
+use core::time;
 use std::{collections::HashMap, time::Duration};
 
 use color_eyre::{eyre::Result, owo_colors::OwoColorize};
@@ -14,11 +15,14 @@ use crate::{
     action::{Action, DiffMode},
     config::{Config, KeyBindings, RuntimeConfig},
     mode::Mode,
+    store::Record,
+    widget::history_item::HisotryItem,
 };
 
 pub struct Home {
     command_tx: Option<UnboundedSender<Action>>,
     config: Config,
+    runtime_config: RuntimeConfig,
     is_no_title: bool,
 
     mode: Mode,
@@ -34,6 +38,7 @@ pub struct Home {
 }
 
 impl Home {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         config: Config,
         runtime_config: RuntimeConfig,
@@ -41,8 +46,11 @@ impl Home {
         diff_mode: Option<DiffMode>,
         is_bell: bool,
         is_no_title: bool,
+        read_only: bool,
+        timemachine_mode: bool,
     ) -> Self {
         Self {
+            runtime_config: runtime_config.clone(),
             command_tx: None,
             config: config.clone(),
             is_no_title,
@@ -53,9 +61,9 @@ impl Home {
             execution_result_component: ExecutionResult::new(is_fold),
             history_component: History::new(runtime_config.clone()),
             prompt_component: Prompt::new(),
-            status_component: Status::new(is_fold, diff_mode, is_bell),
+            status_component: Status::new(is_fold, diff_mode, is_bell, read_only),
             help_component: Help::new(config),
-            timemachine_mode: false,
+            timemachine_mode,
         }
     }
 

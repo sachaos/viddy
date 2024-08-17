@@ -48,7 +48,6 @@ impl Component for Interval {
             .title("Every")
             .borders(Borders::ALL)
             .border_style(self.config.get_style("border"))
-            // .border_style(Color::Indexed(90))
             .title_style(self.config.get_style("title"));
         let text =
             humantime::format_duration(self.runtime_config.interval.to_std().unwrap_or_default())

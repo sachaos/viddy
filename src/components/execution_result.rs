@@ -207,6 +207,18 @@ impl Component for ExecutionResult {
             }
         }
 
+        if y_scrollable > 0 {
+            body.width = area.width.saturating_sub(1);
+            let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                .symbols(scrollbar::VERTICAL)
+                .style(scroll_style)
+                .thumb_symbol("║");
+            f.render_stateful_widget(scrollbar, area, &mut self.y_state);
+            if x_max > body.width as usize {
+                x_scrollable = x_scrollable.saturating_add(1);
+            }
+        }
+
         self.y_state = self.y_state.content_length(y_scrollable);
         self.x_state = self.x_state.content_length(x_scrollable);
 

@@ -18,6 +18,12 @@ use crate::{
     old_config::{General as OldGeneral, OldConfig},
 };
 
+#[derive(Clone, Debug)]
+pub struct RuntimeConfig {
+    pub interval: Duration,
+    pub command: Vec<String>,
+}
+
 const CONFIG: &str = include_str!("../.config/config.json5");
 
 #[derive(Clone, Debug, Deserialize, Default)]
@@ -61,12 +67,6 @@ pub struct Config {
     pub styles: Styles,
     #[serde(default)]
     pub general: General,
-}
-
-#[derive(Clone, Debug)]
-pub struct RuntimeConfig {
-    pub interval: Duration,
-    pub command: Vec<String>,
 }
 
 impl Config {

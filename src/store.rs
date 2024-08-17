@@ -1,3 +1,7 @@
+pub mod memory;
+pub mod sqlite;
+
+use color_eyre::eyre::Result;
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -6,6 +10,15 @@ use std::{
 use chrono::{DateTime, Local};
 
 use crate::types::ExecutionId;
+
+pub trait Store: Clone + Send + Sync + 'static {
+    fn add_record(&mut self, record: Record) -> Result<()>;
+    fn get_record(&self, id: ExecutionId) -> Result<Option<Record>>;
+    fn get_latest_id(&self) -> Result<Option<ExecutionId>>;
+    fn get_records(&self) -> Result<Vec<Record>>;
+    fn get_runtime_config(&self) -> Result<Option<RuntimeConfig>>;
+    fn set_runtime_config(&mut self, config: RuntimeConfig) -> Result<()>;
+}
 
 #[derive(Debug, Clone)]
 pub struct Record {
@@ -19,47 +32,8 @@ pub struct Record {
     pub previous_id: Option<ExecutionId>,
 }
 
-#[derive(Debug)]
-struct StoreData {
-    records: HashMap<ExecutionId, Record>,
-    latest_id: Option<ExecutionId>,
-}
-
-#[derive(Clone, Debug)]
-pub struct Store {
-    data: Arc<RwLock<StoreData>>,
-}
-
-impl Store {
-    pub fn new() -> Self {
-        Self {
-            data: Arc::new(RwLock::new(StoreData {
-                records: HashMap::new(),
-                latest_id: None,
-            })),
-        }
-    }
-
-    pub fn add_record(&mut self, record: Record) {
-        if let Ok(mut data) = self.data.write() {
-            data.latest_id = Some(record.id);
-            data.records.insert(record.id, record);
-        }
-    }
-
-    pub fn get_record(&self, id: ExecutionId) -> Option<Record> {
-        if let Ok(data) = self.data.read() {
-            data.records.get(&id).cloned()
-        } else {
-            None
-        }
-    }
-
-    pub fn get_latest_id(&self) -> Option<ExecutionId> {
-        if let Ok(data) = self.data.read() {
-            data.latest_id
-        } else {
-            None
-        }
-    }
+#[derive(Debug, Clone, Default)]
+pub struct RuntimeConfig {
+    pub interval: String,
+    pub command: String,
 }
