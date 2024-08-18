@@ -118,12 +118,12 @@ brew install sachaos/tap/viddy-rc
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.0-rc.2/viddy-v1.0.0-rc.2-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.0-rc.3/viddy-v1.0.0-rc.3-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 ### Other
 
-Download from [release page](https://github.com/sachaos/viddy/releases/tag/v1.0.0-rc.1).
+Download from [release page](https://github.com/sachaos/viddy/releases/tag/v1.0.0-rc.3).
 
 ## Keymaps
 
