@@ -4,7 +4,7 @@ use std::{
     iter,
 };
 
-use anstyle::{AnsiColor, Color, RgbColor, Style};
+use anstyle::{AnsiColor, Color, Effects, RgbColor, Style};
 use anstyle_parse::{DefaultCharAccumulator, ParamsIter, Parser, Perform};
 use color_eyre::owo_colors::{colors::Default, OwoColorize};
 use derive_deref::{Deref, DerefMut};
@@ -182,12 +182,12 @@ impl Perform for Converter {
 
         let is_sgr = byte == b'm' && intermediates.first().is_none();
         let style = if is_sgr {
-            if params.iter().next() == Some(&[0]) || params.is_empty() {
+            if params.is_empty() {
                 self.reset_style();
                 return;
-            } else {
-                Some(ansi_term_style_from_sgr_parameters(&mut params.iter()))
             }
+
+            Some(ansi_term_style_from_sgr_parameters(&mut params.iter()))
         } else {
             // Some(Element::Csi(0, 0))
             None
@@ -206,6 +206,49 @@ impl Perform for Converter {
             let effects = style.get_effects();
             ss_effects |= effects;
             self.style = self.style.effects(ss_effects);
+        }
+
+        match params.iter().next() {
+            Some([0]) => self.reset_style(),
+            Some([21]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::BOLD))
+            }
+            Some([22]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::DIMMED))
+            }
+            Some([23]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::ITALIC))
+            }
+            Some([24]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::UNDERLINE))
+            }
+            Some([25]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::BLINK))
+            }
+            Some([27]) => {}
+            Some([28]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::HIDDEN))
+            }
+            Some([29]) => {
+                self.style = self
+                    .style
+                    .effects(self.style.get_effects().remove(Effects::STRIKETHROUGH))
+            }
+            Some([39]) => self.style = self.style.fg_color(None),
+            Some([49]) => self.style = self.style.bg_color(None),
+            _ => {}
         }
     }
 
@@ -276,7 +319,7 @@ fn ansi_term_style_from_sgr_parameters(params: &mut ParamsIter<'_>) -> Style {
 
                 style.fg_color(parse_sgr_color(&mut iter))
             }
-            // [39] => Some(Attr::Foreground(Color::Named(NamedColor::Foreground))),
+            // [39] => style.fg_color(None),
             [40] => style.bg_color(Some(anstyle::Color::Ansi(AnsiColor::Black))),
             [41] => style.bg_color(Some(anstyle::Color::Ansi(AnsiColor::Red))),
             [42] => style.bg_color(Some(anstyle::Color::Ansi(AnsiColor::Green))),
@@ -295,7 +338,7 @@ fn ansi_term_style_from_sgr_parameters(params: &mut ParamsIter<'_>) -> Style {
                 let mut iter = iter::once(params[0]).chain(rgb_iter);
                 style.bg_color(parse_sgr_color(&mut iter))
             }
-            // [49] => Some(Attr::Background(Color::Named(NamedColor::Background))),
+            // [49] => style.bg_color(None),
             [90] => style.fg_color(Some(anstyle::Color::Ansi(AnsiColor::BrightBlack))),
             [91] => style.fg_color(Some(anstyle::Color::Ansi(AnsiColor::BrightRed))),
             [92] => style.fg_color(Some(anstyle::Color::Ansi(AnsiColor::BrightGreen))),
@@ -392,6 +435,43 @@ mod test {
                     Char {
                         c: 'g',
                         style: Style::new().fg_color(Some(Color::Ansi(AnsiColor::Green)))
+                    },
+                    Char {
+                        c: '\n',
+                        style: Style::new()
+                    },
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn test_convert_2() {
+        // ❯ echo '\e[34mb\e[39md\e[0ma' | xxd
+        // 00000000: 1b5b 3334 6d62 1b5b 3339 6d64 1b5b 306d  .[34mb.[39md.[0m
+        // 00000010: 610a
+        let text: Vec<u8> = vec![
+            0x1b, 0x5b, 0x33, 0x34, 0x6d, 0x62, 0x1b, 0x5b, 0x33, 0x39, 0x6d, 0x64, 0x1b, 0x5b,
+            0x30, 0x6d, 0x61, 0x0a,
+        ];
+        let mut converter = Converter::new(Style::new());
+        let result = converter.convert(&text);
+
+        assert_eq!(
+            result,
+            Text {
+                chars: vec![
+                    Char {
+                        c: 'b',
+                        style: Style::new().fg_color(Some(Color::Ansi(AnsiColor::Blue)))
+                    },
+                    Char {
+                        c: 'd',
+                        style: Style::new()
+                    },
+                    Char {
+                        c: 'a',
+                        style: Style::new()
                     },
                     Char {
                         c: '\n',
