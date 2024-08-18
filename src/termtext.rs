@@ -146,9 +146,9 @@ impl Perform for Converter {
     }
 
     fn execute(&mut self, byte: u8) {
-        if byte == b'\n' {
+        if byte == b'\n' || byte == b'\t' {
             self.text.add_char(Char {
-                c: '\n',
+                c: byte as char,
                 style: self.style,
             });
         }
@@ -392,6 +392,39 @@ mod test {
                     Char {
                         c: 'g',
                         style: Style::new().fg_color(Some(Color::Ansi(AnsiColor::Green)))
+                    },
+                    Char {
+                        c: '\n',
+                        style: Style::new()
+                    },
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn test_convert_tab() {
+        // echo "1\t2" | xxd
+        // 00000000: 3109 320a                                1.2.
+        let text: Vec<u8> = vec![0x31, 0x09, 0x32, 0x0a];
+        let mut converter = Converter::new(Style::new());
+        let result = converter.convert(&text);
+
+        assert_eq!(
+            result,
+            Text {
+                chars: vec![
+                    Char {
+                        c: '1',
+                        style: Style::new(),
+                    },
+                    Char {
+                        c: '\t',
+                        style: Style::new(),
+                    },
+                    Char {
+                        c: '2',
+                        style: Style::new(),
                     },
                     Char {
                         c: '\n',
