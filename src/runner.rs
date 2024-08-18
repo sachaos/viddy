@@ -9,6 +9,7 @@ use tokio::{
 
 use crate::{
     action::Action,
+    bytes::normalize_stdout,
     config::{Config, RuntimeConfig},
     exec::exec,
     store::{Record, Store},

@@ -5,6 +5,7 @@
 
 pub mod action;
 pub mod app;
+mod bytes;
 pub mod cli;
 pub mod components;
 pub mod config;
