@@ -2,14 +2,13 @@ name: CD # Continuous Deployment
 
 on:
   push:
-    tags:
-      - '[v]?[0-9]+.[0-9]+.[0-9]+'
-      - '[v]?[0-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
+    branches:
+      - test-cd
 
 jobs:
   publish:
 
-    name: Publishing for ${{ matrix.os }}
+    name: Publishing for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -86,9 +85,7 @@ jobs:
       - name: install strip command
         shell: bash
         run: |
-
           if [[ ${{ matrix.target }} == aarch64-unknown-linux-gnu ]]; then
-
               sudo apt update
               sudo apt-get install -y binutils-aarch64-linux-gnu
           fi
@@ -103,16 +100,18 @@ jobs:
 
           BINARY_NAME=${{ matrix.binary-name }}${{ matrix.binary-postfix }}
           if [[ ${{ matrix.target }} == aarch64-unknown-linux-gnu ]]; then
-
             GCC_PREFIX="aarch64-linux-gnu-"
           else
             GCC_PREFIX=""
           fi
-          "$GCC_PREFIX"strip $BINARY_NAME
+
+          if [[ ${{ matrix.target }} != aarch64-unknown-linux-musl ]]; then
+            "$GCC_PREFIX"strip $BINARY_NAME
+          fi
 
           ########## create tar.gz ##########
 
-          RELEASE_NAME=${{ matrix.binary-name }}-${GITHUB_REF/refs\/tags\//}-${{ matrix.os-name }}-${{ matrix.architecture }}
+          RELEASE_NAME=${{ matrix.binary-name }}-test-${{ matrix.os-name }}-${{ matrix.architecture }}
 
           tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME
 
@@ -124,16 +123,15 @@ jobs:
           else
             shasum -a 256 $RELEASE_NAME.tar.gz > $RELEASE_NAME.sha256
           fi
-      - name: Releasing assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
+      # - name: Releasing assets
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     files: |
 
-            target/${{ matrix.target }}/release/${{ matrix.binary-name }}-*.tar.gz
-            target/${{ matrix.target }}/release/${{ matrix.binary-name }}-*.sha256
+      #       target/${{ matrix.target }}/release/${{ matrix.binary-name }}-*.tar.gz
+      #       target/${{ matrix.target }}/release/${{ matrix.binary-name }}-*.sha256
 
-        env:
+      #   env:
 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
