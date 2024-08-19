@@ -9,7 +9,7 @@ on:
 jobs:
   publish:
 
-    name: Publishing for ${{ matrix.os }}
+    name: Publishing for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -86,9 +86,7 @@ jobs:
       - name: install strip command
         shell: bash
         run: |
-
           if [[ ${{ matrix.target }} == aarch64-unknown-linux-gnu ]]; then
-
               sudo apt update
               sudo apt-get install -y binutils-aarch64-linux-gnu
           fi
@@ -103,12 +101,14 @@ jobs:
 
           BINARY_NAME=${{ matrix.binary-name }}${{ matrix.binary-postfix }}
           if [[ ${{ matrix.target }} == aarch64-unknown-linux-gnu ]]; then
-
             GCC_PREFIX="aarch64-linux-gnu-"
           else
             GCC_PREFIX=""
           fi
-          "$GCC_PREFIX"strip $BINARY_NAME
+
+          if [[ ${{ matrix.target }} != aarch64-unknown-linux-musl ]]; then
+            "$GCC_PREFIX"strip $BINARY_NAME
+          fi
 
           ########## create tar.gz ##########
 
@@ -135,5 +135,4 @@ jobs:
         env:
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
