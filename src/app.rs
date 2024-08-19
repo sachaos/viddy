@@ -339,11 +339,11 @@ impl<S: Store> App<S> {
                         if let Some(record) = record {
                             action_tx.send(Action::SetClock(record.start_time))?;
                             let mut result = termtext::Converter::new(style)
-                                .convert(&normalize_stdout(record.stdout.clone()));
+                                .convert(&normalize_stdout(&record.stdout));
                             log::debug!("result: {:?}", result);
                             if record.stdout.is_empty() {
                                 result = termtext::Converter::new(style)
-                                    .convert(&normalize_stdout(record.stderr.clone()));
+                                    .convert(&normalize_stdout(&record.stderr));
                                 result.mark_text(
                                     0,
                                     result.len(),
@@ -357,7 +357,9 @@ impl<S: Store> App<S> {
                                         let previous_record = self.store.get_record(previous_id)?;
                                         if let Some(previous_record) = previous_record {
                                             let previous_result = termtext::Converter::new(style)
-                                                .convert(&normalize_stdout(previous_record.stdout));
+                                                .convert(&normalize_stdout(
+                                                    &previous_record.stdout,
+                                                ));
                                             let previous_string = previous_result.plain_text();
                                             if diff_mode == DiffMode::Add {
                                                 diff_and_mark(
