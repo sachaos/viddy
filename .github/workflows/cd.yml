@@ -57,6 +57,27 @@ jobs:
             binary-postfix: ""
             use-cross: true
             binary-name: viddy
+          - os: ubuntu-latest
+            os-name: linux
+            target: x86_64-unknown-linux-musl
+            architecture: x86_64
+            binary-postfix: ""
+            use-cross: true
+            binary-name: viddy
+          - os: ubuntu-latest
+            os-name: linux
+            target: aarch64-unknown-linux-musl
+            architecture: arm64
+            binary-postfix: ""
+            use-cross: true
+            binary-name: viddy
+          - os: ubuntu-latest
+            os-name: linux
+            target: i686-unknown-linux-musl
+            architecture: i686
+            binary-postfix: ""
+            use-cross: true
+            binary-name: viddy
 
     steps:
       - name: Checkout repository
