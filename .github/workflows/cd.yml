@@ -64,7 +64,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
 
           target: ${{ matrix.target }}
 
@@ -78,7 +78,7 @@ jobs:
 
           use-cross: ${{ matrix.use-cross }}
 
-          toolchain: nightly
+          toolchain: stable
 
           args: --release --target ${{ matrix.target }}
 
