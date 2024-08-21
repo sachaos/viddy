@@ -340,7 +340,6 @@ impl<S: Store> App<S> {
                             action_tx.send(Action::SetClock(record.start_time))?;
                             let mut result = termtext::Converter::new(style)
                                 .convert(&normalize_stdout(&record.stdout));
-                            log::debug!("result: {:?}", result);
                             if record.stdout.is_empty() {
                                 result = termtext::Converter::new(style)
                                     .convert(&normalize_stdout(&record.stderr));
@@ -401,7 +400,6 @@ impl<S: Store> App<S> {
                     Action::SetTimemachineMode(timemachine_mode) => {
                         self.timemachine_mode = timemachine_mode;
                         if let Some(latest_id) = self.store.get_latest_id()? {
-                            log::debug!("Latest ID: {latest_id}");
                             action_tx.send(Action::ShowExecution(latest_id, latest_id))?;
                         }
                     }
@@ -510,7 +508,7 @@ impl<S: Store> App<S> {
         tui.exit()?;
 
         if !executor_handle.is_finished() {
-            log::debug!("Waiting for executor to finish");
+            log::info!("Waiting for executor to finish");
             executor_handle.abort();
             return Ok(());
         }
