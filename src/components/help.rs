@@ -226,6 +226,16 @@ impl Component for Help {
                 Action::ResultScrollUp.to_string(),
             ),
             (
+                "Move to right         ",
+                Mode::All,
+                Action::ScrollRight.to_string(),
+            ),
+            (
+                "Move to left          ",
+                Mode::All,
+                Action::ScrollLeft.to_string(),
+            ),
+            (
                 "Page down             ",
                 Mode::All,
                 Action::ResultPageDown.to_string(),
