@@ -30,19 +30,21 @@ fn keys_str(
 ) -> Vec<Span> {
     keybindings.get(&(mode, action.clone())).map_or_else(
         || vec![Span::from("None")],
-        |keys| {
-            keys.iter()
-                .map(|keys| {
-                    let mut s = String::new();
-                    for key in keys {
-                        s.push('<');
-                        s.push_str(&display_key(key));
-                        s.push('>');
-                    }
-                    Span::styled(s, Style::default().fg(Color::Yellow))
-                })
-                .intersperse(Span::from(", "))
-                .collect()
+        |keys_list| {
+            let mut spans = Vec::new();
+            for (i, keys) in keys_list.iter().enumerate() {
+                let mut s = String::new();
+                for key in keys {
+                    s.push('<');
+                    s.push_str(&display_key(key));
+                    s.push('>');
+                }
+                spans.push(Span::styled(s, Style::default().fg(Color::Yellow)));
+                if i < keys_list.len() - 1 {
+                    spans.push(Span::from(", "));
+                }
+            }
+            spans
         },
     )
 }
@@ -395,4 +397,34 @@ fn get_action_keys(keybindings: KeyBindings) -> HashMap<(Mode, String), Vec<Vec<
         });
     });
     action_keys
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_keys_str() {
+        let mut keybindings = HashMap::new();
+        let mode = Mode::All;
+        let action = String::from("action");
+        let key_event1 = KeyEvent::from(KeyCode::Char('a'));
+        let key_event2 = KeyEvent::from(KeyCode::Char('b'));
+        let key_event3 = KeyEvent::from(KeyCode::Char('c'));
+        keybindings.insert(
+            (mode, action.clone()),
+            vec![vec![key_event1], vec![key_event2, key_event3]],
+        );
+
+        let result = keys_str(&keybindings, mode, action);
+
+        let expected_output = vec![
+            Span::styled("<a>", Style::default().fg(Color::Yellow)),
+            Span::from(", "),
+            Span::styled("<b><c>", Style::default().fg(Color::Yellow)),
+        ];
+        assert_eq!(result, expected_output);
+    }
 }
