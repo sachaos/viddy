@@ -14,16 +14,6 @@ Viddy well, gopher. Viddy well.
 <img src="images/demo.gif" width="100%" alt="viddy" title="viddy" />
 </p>
 
-## Viddy v1.0.0 RC is available
-
-Viddy was originally a program written in Go, but starting from version 1.0.0, it is being reimplemented in Rust. For more details, please see [the announcement](https://github.com/sachaos/viddy/issues/117). We are currently distributing a release candidate (RC) version of v1.0.0.
-
-Since the build methods will change for each package management system, please take note and make the necessary adjustments.
-
-We would greatly appreciate it if as many people as possible could test the RC version. If you are willing to help, we would be very grateful if you could install and test the RC version. Please refer to [the RC installation section](#install-v100-rc-version) for details.
-
-If you find any bugs or areas for improvement, feel free to submit an issue.
-
 ## Features
 
 * Basic features of original watch command.
@@ -77,7 +67,7 @@ scoop install extras/viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v0.4.0/viddy_Linux_x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.0/viddy-v1.0.0-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 #### ArchLinux ( AUR )
@@ -107,24 +97,6 @@ asdf global viddy latest
 
 Download from [release page](https://github.com/sachaos/viddy/releases).
 
-## Install v1.0.0 RC version
-
-### Mac
-
-```shell
-brew install sachaos/tap/viddy-rc
-```
-
-### Linux
-
-```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.0-rc.5/viddy-v1.0.0-rc.5-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
-```
-
-### Other
-
-Download from [release page](https://github.com/sachaos/viddy/releases/tag/v1.0.0-rc.5).
-
 ## Keymaps
 
 | key       |                                            |
@@ -138,6 +110,8 @@ Download from [release page](https://github.com/sachaos/viddy/releases/tag/v1.0.
 | /         | Search text                                |
 | j         | Pager: next line                           |
 | k         | Pager: previous line                       |
+| h         | Pager: move left                           |
+| l         | Pager: move right                          |
 | Control-F | Pager: page down                           |
 | Control-B | Pager: page up                             |
 | g         | Pager: go to top of page                   |
