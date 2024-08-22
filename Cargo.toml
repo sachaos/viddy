@@ -1,6 +1,6 @@
 [package]
 name = "viddy"
-version = "1.0.0-rc.5"
+version = "1.0.0"
 edition = "2021"
 description = "A modern watch command"
 
