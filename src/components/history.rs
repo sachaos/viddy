@@ -23,15 +23,15 @@ use crate::{
     config::{Config, KeyBindings, RuntimeConfig},
     mode::Mode,
     types::ExecutionId,
-    widget::history_item::HisotryItem,
+    widget::history_item::HistoryItem,
 };
 
 pub struct History {
     latest_id: Option<ExecutionId>,
     command_tx: Option<UnboundedSender<Action>>,
     config: Config,
-    items: VecDeque<Rc<RefCell<HisotryItem>>>,
-    index: HashMap<ExecutionId, Rc<RefCell<HisotryItem>>>,
+    items: VecDeque<Rc<RefCell<HistoryItem>>>,
+    index: HashMap<ExecutionId, Rc<RefCell<HistoryItem>>>,
     state: ListState,
     mode: Mode,
     runtime_config: RuntimeConfig,
@@ -68,7 +68,7 @@ impl History {
     }
 
     fn insert_history(&mut self, id: ExecutionId, start_time: DateTime<Local>) -> Result<()> {
-        let item = Rc::new(RefCell::new(HisotryItem::new(
+        let item = Rc::new(RefCell::new(HistoryItem::new(
             id,
             start_time,
             self.runtime_config.interval,

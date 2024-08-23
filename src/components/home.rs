@@ -16,7 +16,7 @@ use crate::{
     config::{Config, KeyBindings, RuntimeConfig},
     mode::Mode,
     store::Record,
-    widget::history_item::HisotryItem,
+    widget::history_item::HistoryItem,
 };
 
 pub struct Home {

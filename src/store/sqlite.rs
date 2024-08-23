@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::store::{Record, Store};
 use crate::types::ExecutionId;
-use crate::widget::history_item::HisotryItem;
+use crate::widget::history_item::HistoryItem;
 
 #[derive(Debug, Clone)]
 pub struct SQLiteStore {
