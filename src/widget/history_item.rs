@@ -5,7 +5,7 @@ use tui_widget_list::{List, ListState, PreRender, PreRenderContext};
 use crate::{config::Config, types::ExecutionId};
 
 #[derive(Debug, Clone)]
-pub struct HisotryItem {
+pub struct HistoryItem {
     pub id: ExecutionId,
     pub diff: Option<(u32, u32)>,
     pub start_time: DateTime<Local>,
@@ -18,7 +18,7 @@ pub struct HisotryItem {
     pub secondary_text_style: Style,
 }
 
-impl HisotryItem {
+impl HistoryItem {
     pub fn new(
         id: ExecutionId,
         start_time: DateTime<Local>,
@@ -51,7 +51,7 @@ impl HisotryItem {
     }
 }
 
-impl PreRender for HisotryItem {
+impl PreRender for HistoryItem {
     fn pre_render(&mut self, context: &PreRenderContext) -> u16 {
         if context.is_selected {
             self.style = self.selector_style;
@@ -61,7 +61,7 @@ impl PreRender for HisotryItem {
     }
 }
 
-impl Widget for HisotryItem {
+impl Widget for HistoryItem {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let time_style = if self.is_running {
             self.secondary_text_style
