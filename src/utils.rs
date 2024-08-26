@@ -1,9 +1,8 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::LazyLock};
 
 use color_eyre::eyre::Result;
 use directories::{BaseDirs, ProjectDirs};
 use human_panic::Metadata;
-use lazy_static::lazy_static;
 use tracing::error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{
@@ -19,19 +18,20 @@ const VERSION_MESSAGE: &str = concat!(
     ")"
 );
 
-lazy_static! {
-    pub static ref PROJECT_NAME: String = env!("CARGO_CRATE_NAME").to_uppercase().to_string();
-    pub static ref DATA_FOLDER: Option<PathBuf> =
-        std::env::var(format!("{}_DATA", PROJECT_NAME.clone()))
-            .ok()
-            .map(PathBuf::from);
-    pub static ref CONFIG_FOLDER: Option<PathBuf> =
-        std::env::var(format!("{}_CONFIG", PROJECT_NAME.clone()))
-            .ok()
-            .map(PathBuf::from);
-    pub static ref LOG_ENV: String = format!("{}_LOGLEVEL", PROJECT_NAME.clone());
-    pub static ref LOG_FILE: String = format!("{}.log", env!("CARGO_PKG_NAME"));
-}
+pub static PROJECT_NAME: LazyLock<String> =
+    LazyLock::new(|| env!("CARGO_CRATE_NAME").to_uppercase());
+pub static DATA_FOLDER: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+    std::env::var(format!("{}_DATA", *PROJECT_NAME))
+        .ok()
+        .map(PathBuf::from)
+});
+pub static CONFIG_FOLDER: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
+    std::env::var(format!("{}_CONFIG", *PROJECT_NAME))
+        .ok()
+        .map(PathBuf::from)
+});
+pub static LOG_ENV: LazyLock<String> = LazyLock::new(|| format!("{}_LOGLEVEL", *PROJECT_NAME));
+pub const LOG_FILE: &str = concat!(env!("CARGO_PKG_NAME"), ".log");
 
 fn project_directory() -> Option<ProjectDirs> {
     ProjectDirs::from("dev", "sachaos", env!("CARGO_PKG_NAME"))
@@ -120,7 +120,7 @@ pub fn get_old_config_dir() -> PathBuf {
 pub fn initialize_logging() -> Result<()> {
     let directory = get_data_dir();
     std::fs::create_dir_all(directory.clone())?;
-    let log_path = directory.join(LOG_FILE.clone());
+    let log_path = directory.join(LOG_FILE);
     let log_file = std::fs::File::create(log_path)?;
     std::env::set_var(
         "RUST_LOG",
