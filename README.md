@@ -42,21 +42,29 @@ Viddy well, gopher. Viddy well.
 cargo install viddy
 ```
 
-### Mac
-
-#### [Homebrew](https://brew.sh)
+### [Homebrew](https://brew.sh)
 
 ```shell
 brew install viddy
 ```
+
+### Linux
+
+```shell
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.2/viddy-v1.0.2-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+```
+
+### Other
+
+Download from [release page](https://github.com/sachaos/viddy/releases).
+
+## Install with Other Package Managers (Community-Maintained)
 
 #### [MacPorts](https://www.macports.org)
 
 ```shell
 sudo port install viddy
 ```
-
-### Windows
 
 #### [Scoop](https://scoop.sh/)
 
@@ -68,12 +76,6 @@ To install Viddy on Windows, first install the Scoop package manager, and then r
 scoop install git
 scoop bucket add extras
 scoop install extras/viddy
-```
-
-### Linux
-
-```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.0.2/viddy-v1.0.2-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 #### ArchLinux ( AUR )
@@ -91,17 +93,13 @@ After [enabling the community repository](https://wiki.alpinelinux.org/wiki/Enab
 apk add viddy
 ```
 
-### [asdf version manager](https://asdf-vm.com)
+#### [asdf version manager](https://asdf-vm.com)
 
 ```shell
 asdf plugin add viddy
 asdf install viddy latest
 asdf global viddy latest
 ```
-
-### Other
-
-Download from [release page](https://github.com/sachaos/viddy/releases).
 
 ## Keymaps
 
