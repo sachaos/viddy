@@ -36,6 +36,12 @@ Viddy well, gopher. Viddy well.
 
 ## Install
 
+### Cargo
+
+```shell
+cargo install viddy
+```
+
 ### Mac
 
 #### [Homebrew](https://brew.sh)
