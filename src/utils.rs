@@ -33,9 +33,8 @@ pub static CONFIG_FOLDER: LazyLock<Option<PathBuf>> = LazyLock::new(|| {
 pub static LOG_ENV: LazyLock<String> = LazyLock::new(|| format!("{}_LOGLEVEL", *PROJECT_NAME));
 pub const LOG_FILE: &str = concat!(env!("CARGO_PKG_NAME"), ".log");
 
-fn project_directory() -> Option<ProjectDirs> {
-    ProjectDirs::from("dev", "sachaos", env!("CARGO_PKG_NAME"))
-}
+pub static PROJECT_DIRECTORY: LazyLock<Option<ProjectDirs>> =
+    LazyLock::new(|| ProjectDirs::from("dev", "sachaos", env!("CARGO_PKG_NAME")));
 
 pub fn initialize_panic_handler() -> Result<()> {
     let (panic_hook, eyre_hook) = color_eyre::config::HookBuilder::default()
@@ -87,34 +86,31 @@ pub fn initialize_panic_handler() -> Result<()> {
 }
 
 pub fn get_data_dir() -> PathBuf {
-    let directory = if let Some(s) = DATA_FOLDER.clone() {
-        s
-    } else if let Some(proj_dirs) = project_directory() {
+    if let Some(s) = &*DATA_FOLDER {
+        s.clone()
+    } else if let Some(ref proj_dirs) = *PROJECT_DIRECTORY {
         proj_dirs.data_local_dir().to_path_buf()
     } else {
         PathBuf::from(".").join(".data")
-    };
-    directory
+    }
 }
 
 pub fn get_config_dir() -> PathBuf {
-    let directory = if let Some(s) = CONFIG_FOLDER.clone() {
-        s
-    } else if let Some(proj_dirs) = project_directory() {
+    if let Some(s) = &*CONFIG_FOLDER {
+        s.clone()
+    } else if let Some(ref proj_dirs) = *PROJECT_DIRECTORY {
         proj_dirs.config_local_dir().to_path_buf()
     } else {
         PathBuf::from(".").join(".config")
-    };
-    directory
+    }
 }
 
 pub fn get_old_config_dir() -> PathBuf {
-    let directory = if let Some(base_dirs) = BaseDirs::new() {
+    if let Some(base_dirs) = BaseDirs::new() {
         base_dirs.config_dir().to_path_buf()
     } else {
         PathBuf::from(".").join(".config")
-    };
-    directory
+    }
 }
 
 pub fn initialize_logging() -> Result<()> {
