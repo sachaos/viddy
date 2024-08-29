@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anstyle::{Color, RgbColor, Style};
 use chrono::Duration;
 use color_eyre::{eyre::Result, owo_colors::OwoColorize};
-use crossterm::event::{Event, KeyEvent};
+use crossterm::event::{Event, KeyEvent, MouseEvent};
 use ratatui::{prelude::Rect, widgets::Block};
 use serde::{Deserialize, Serialize};
 use tokio::{
@@ -211,7 +211,7 @@ impl<S: Store> App<S> {
         let mut tui = tui::Tui::new()?
             .tick_rate(self.tick_rate)
             .frame_rate(self.frame_rate);
-        // tui.mouse(true);
+        tui = tui.mouse(true);
         tui.enter()?;
 
         for component in self.components.iter_mut() {
@@ -229,6 +229,9 @@ impl<S: Store> App<S> {
         loop {
             if let Some(e) = tui.next().await {
                 match e {
+                    tui::Event::Mouse(me) => {
+                        action_tx.send(Action::MouseEvent(me))?;
+                    }
                     tui::Event::Quit => action_tx.send(Action::Quit)?,
                     tui::Event::Tick => action_tx.send(Action::Tick)?,
                     tui::Event::Render => action_tx.send(Action::Render)?,
@@ -498,7 +501,7 @@ impl<S: Store> App<S> {
                 tui = tui::Tui::new()?
                     .tick_rate(self.tick_rate)
                     .frame_rate(self.frame_rate);
-                // tui.mouse(true);
+                tui = tui.mouse(true);
                 tui.enter()?;
             } else if self.should_quit {
                 tui.stop()?;

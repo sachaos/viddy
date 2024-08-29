@@ -1,7 +1,7 @@
 use std::{fmt, string::ToString};
 
 use chrono::{DateTime, Local};
-use crossterm::event::KeyEvent;
+use crossterm::event::{KeyEvent, MouseEvent};
 use serde::{
     de::{self, Deserializer, Visitor},
     Deserialize, Serialize,
@@ -25,6 +25,7 @@ pub enum Action {
     Resume,
     Quit,
     Refresh,
+    MouseEvent(MouseEvent),
     Error(String),
     Help,
     StartExecution(ExecutionId, DateTime<Local>),
