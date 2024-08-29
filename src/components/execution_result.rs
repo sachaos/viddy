@@ -4,7 +4,7 @@ use ansi_parser::{AnsiParser, AnsiSequence, Output};
 use ansi_to_tui::IntoText;
 use chrono::{DateTime, Local};
 use color_eyre::eyre::Result;
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use ratatui::{prelude::*, widgets::*};
 use serde::{Deserialize, Serialize};
 use symbols::scrollbar;
@@ -17,6 +17,7 @@ use crate::{
     action::Action,
     config::{Config, KeyBindings, RuntimeConfig},
     termtext::{Char, Text},
+    utils::is_in_area,
 };
 
 pub struct ExecutionResult {
@@ -33,6 +34,8 @@ pub struct ExecutionResult {
     y_area_size: u16,
     y_max_scroll_size: u16,
     fold: bool,
+
+    rect: Rect,
 }
 
 impl ExecutionResult {
@@ -49,6 +52,7 @@ impl ExecutionResult {
             y_max_scroll_size: 0,
             x_position: 0,
             y_position: 0,
+            rect: Rect::default(),
         }
     }
 
@@ -109,6 +113,20 @@ impl ExecutionResult {
     fn set_fold(&mut self, is_fold: bool) {
         self.fold = is_fold;
     }
+
+    fn handle_mouse_events(&mut self, event: MouseEvent) {
+        if !is_in_area(event.column, event.row, self.rect) {
+            return;
+        }
+
+        match event.kind {
+            MouseEventKind::ScrollDown => self.scroll_down(),
+            MouseEventKind::ScrollUp => self.scroll_up(),
+            MouseEventKind::ScrollLeft => self.scroll_left(),
+            MouseEventKind::ScrollRight => self.scroll_right(),
+            _ => {}
+        }
+    }
 }
 
 fn text_width(text: &Text) -> usize {
@@ -148,12 +166,15 @@ impl Component for ExecutionResult {
             Action::SetFold(is_fold) => self.set_fold(is_fold),
             Action::BottomOfPage => self.bottom_of_page(),
             Action::TopOfPage => self.top_of_page(),
+            Action::MouseEvent(e) => self.handle_mouse_events(e),
             _ => {}
         }
         Ok(None)
     }
 
     fn draw(&mut self, f: &mut Frame<'_>, area: Rect) -> Result<()> {
+        self.rect = area;
+
         let text = self.result.clone().unwrap_or(Text::new(""));
         let mut current = text.to_string();
         let mut y_max;

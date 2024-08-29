@@ -10,7 +10,7 @@ use color_eyre::{
     eyre::{Ok, OptionExt, Result},
     owo_colors::OwoColorize,
 };
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use ratatui::{prelude::*, widgets::*};
 use serde::{Deserialize, Serialize};
 use symbols::scrollbar;
@@ -23,6 +23,7 @@ use crate::{
     config::{Config, KeyBindings, RuntimeConfig},
     mode::Mode,
     types::ExecutionId,
+    utils::is_in_area,
     widget::history_item::HistoryItem,
 };
 
@@ -37,6 +38,7 @@ pub struct History {
     runtime_config: RuntimeConfig,
     timemachine_mode: bool,
     y_state: ScrollbarState,
+    rect: Rect,
 }
 
 impl History {
@@ -54,6 +56,7 @@ impl History {
             runtime_config,
             timemachine_mode: false,
             y_state: ScrollbarState::default(),
+            rect: Rect::default(),
         }
     }
 
@@ -196,6 +199,19 @@ impl History {
 
         self.select_latest()
     }
+
+    fn handle_mouse_events(&mut self, event: MouseEvent) -> Result<()> {
+        log::debug!("Mouse event: {:?}", event);
+        if !is_in_area(event.column, event.row, self.rect) {
+            return Ok(());
+        }
+
+        match event.kind {
+            MouseEventKind::ScrollDown => self.go_to_past(),
+            MouseEventKind::ScrollUp => self.go_to_future(),
+            _ => Ok(()),
+        }
+    }
 }
 
 impl Component for History {
@@ -225,6 +241,7 @@ impl Component for History {
             Action::GoToMorePast => self.go_to_more_past()?,
             Action::GoToOldest => self.go_to_oldest()?,
             Action::GoToCurrent => self.go_to_current()?,
+            Action::MouseEvent(e) => self.handle_mouse_events(e)?,
             _ => {}
         }
 
@@ -232,6 +249,8 @@ impl Component for History {
     }
 
     fn draw(&mut self, f: &mut Frame<'_>, area: Rect) -> Result<()> {
+        self.rect = area;
+
         let block = Block::default()
             .title("History")
             .borders(Borders::ALL)
