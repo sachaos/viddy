@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use chrono::{format::Parsed, Duration};
 use clap::Parser;
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{bail, eyre, Result};
 use serde_with::serde_as;
 
 use crate::utils::version;
@@ -20,9 +20,9 @@ pub struct Cli {
     #[arg(
     short = 'n',
     long = "interval",
-    value_parser = parse_duration_from_str,
+    value_parser = validate_duration,
     default_value = "2s",
-    help = "Seconds to wait between updates",
+    help = "Seconds to wait between updates (>= 100ms)",
   )]
     pub interval: Duration,
 
@@ -121,6 +121,15 @@ pub struct Cli {
         conflicts_with_all = ["save", "disable_auto_save", "shell", "shell_options", "is_exec", "is_bell", "is_precise", "interval"]
     )]
     pub load: Option<PathBuf>,
+}
+
+fn validate_duration(s: &str) -> Result<Duration> {
+    let d = parse_duration_from_str(s)?;
+    if d < Duration::milliseconds(100) {
+        bail!("The short interval is not allowed (less than 100ms)");
+    }
+
+    Ok(d)
 }
 
 fn parse_duration_from_str(s: &str) -> Result<Duration> {
