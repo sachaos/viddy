@@ -113,15 +113,16 @@ impl History {
     }
 
     fn select_latest(&mut self) -> Result<()> {
-        for (i, item) in self.items.iter().enumerate() {
+        let index_to_select = self.items.iter().enumerate().find_map(|(i, item)| {
             let item = item.borrow();
             if !item.is_running {
-                self.state.select(Some(i));
-                return Ok(());
+                Some(i)
+            } else {
+                None
             }
-        }
+        });
 
-        Ok(())
+        self.select(index_to_select)
     }
 
     fn select(&mut self, index: Option<usize>) -> Result<()> {
