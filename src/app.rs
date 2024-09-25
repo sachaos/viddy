@@ -106,7 +106,7 @@ impl<S: Store> App<S> {
             Some(ref shell_options) if !shell_options.is_empty() => {
                 shell_options.split(' ').map(|s| s.to_string()).collect()
             }
-            _ => vec!["-c".to_string()],
+            _ => Vec::new(),
         };
         let is_exec = cli.is_exec || default_exec;
         let shell = if is_exec {
