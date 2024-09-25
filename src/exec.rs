@@ -31,7 +31,9 @@ fn prepare_command(
     }
 
     if let Some((shell, mut shell_options)) = shell {
-        shell_options.push("-c".to_string());
+        if !shell_options.contains(&"-c".to_string()) {
+            shell_options.push("-c".to_string());
+        }
         shell_options.push(command.join(" "));
         (shell, shell_options)
     } else {
