@@ -10,6 +10,7 @@ use tokio::{
 use crate::{
     action::Action,
     bytes::normalize_stdout,
+    components::status,
     config::{Config, RuntimeConfig},
     exec::exec,
     store::{Record, Store},
@@ -39,12 +40,11 @@ pub async fn run_executor<S: Store>(
         }
 
         let result = exec(runtime_config.command.clone(), shell.clone()).await;
-        if result.is_err() {
-            eprintln!("Failed to execute command");
-            tokio::time::sleep(runtime_config.interval.to_std().unwrap()).await;
-        }
+        let (stdout, stderr, status) = match result {
+            Ok(result) => result,
+            Err(e) => (vec![], e.to_string().bytes().collect(), 1),
+        };
 
-        let (stdout, stderr, status) = result.unwrap();
         let exit_code = status;
         let utf8_stdout = String::from_utf8_lossy(&stdout).to_string();
         let utf8_stderr = String::from_utf8_lossy(&stderr).to_string();
@@ -113,12 +113,11 @@ pub async fn run_executor_precise<S: Store>(
         }
 
         let result = exec(runtime_config.command.clone(), shell.clone()).await;
-        if result.is_err() {
-            eprintln!("Failed to execute command");
-            tokio::time::sleep(runtime_config.interval.to_std().unwrap()).await;
-        }
+        let (stdout, stderr, status) = match result {
+            Ok(result) => result,
+            Err(e) => (vec![], e.to_string().bytes().collect(), 1),
+        };
 
-        let (stdout, stderr, status) = result.unwrap();
         let exit_code = status;
         let utf8_stdout = String::from_utf8_lossy(&stdout).to_string();
         let utf8_stderr = String::from_utf8_lossy(&stderr).to_string();
