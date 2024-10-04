@@ -60,13 +60,13 @@ Download from [release page](https://github.com/sachaos/viddy/releases).
 
 ## Install with Other Package Managers (Community-Maintained)
 
-#### [MacPorts](https://www.macports.org)
+### [MacPorts](https://www.macports.org)
 
 ```shell
 sudo port install viddy
 ```
 
-#### [Scoop](https://scoop.sh/)
+### [Scoop](https://scoop.sh/)
 
 To install Viddy on Windows, first install the Scoop package manager, and then run the commands below.
 
@@ -78,14 +78,14 @@ scoop bucket add extras
 scoop install extras/viddy
 ```
 
-#### ArchLinux ( AUR )
+### ArchLinux ( AUR )
 
 ```shell
 yay -S viddy
 ```
 Alternatively you can use the [AUR Git repo](https://aur.archlinux.org/packages/viddy/) directly
 
-#### Alpine Linux
+### Alpine Linux
 
 After [enabling the community repository](https://wiki.alpinelinux.org/wiki/Enable_Community_Repository):
 
@@ -93,7 +93,7 @@ After [enabling the community repository](https://wiki.alpinelinux.org/wiki/Enab
 apk add viddy
 ```
 
-#### [asdf version manager](https://asdf-vm.com)
+### [asdf version manager](https://asdf-vm.com)
 
 ```shell
 asdf plugin add viddy
