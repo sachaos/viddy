@@ -7,8 +7,8 @@ use color_eyre::eyre::Result;
 use crossterm::{
     cursor,
     event::{
-        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-        Event as CrosstermEvent, KeyEvent, KeyEventKind, MouseEvent,
+        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, Event as CrosstermEvent,
+        KeyEvent, KeyEventKind, MouseEvent,
     },
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -182,7 +182,7 @@ impl Tui {
         crossterm::terminal::enable_raw_mode()?;
         crossterm::execute!(io(), EnterAlternateScreen, cursor::Hide)?;
         if self.mouse {
-            crossterm::execute!(io(), EnableMouseCapture)?;
+            crossterm::execute!(io())?;
         }
         if self.paste {
             crossterm::execute!(io(), EnableBracketedPaste)?;
