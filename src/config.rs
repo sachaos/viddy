@@ -181,7 +181,13 @@ impl From<OldConfig> for Config {
         let keymap = old_config.keymap.unwrap_or_default();
         let color = old_config.color.unwrap_or_default();
 
-        let wrap = |s: &str| format!("<{}>", s);
+        let wrap = |s: &str| {
+            s.trim()
+                .split(" ")
+                .map(|s| format!("<{}>", s))
+                .collect::<Vec<_>>()
+                .join("")
+        };
         let mut all_keybindings = HashMap::new();
         let mut insert_keybinding = |key: Option<String>, action: Action| {
             if let Some(s) = key {
@@ -196,6 +202,17 @@ impl From<OldConfig> for Config {
         insert_keybinding(keymap.timemachine_go_to_now, Action::GoToCurrent);
         insert_keybinding(keymap.timemachine_go_to_oldest, Action::GoToOldest);
         insert_keybinding(keymap.toggle_timemachine, Action::SwitchTimemachineMode);
+        insert_keybinding(keymap.scroll_left, Action::ScrollLeft);
+        insert_keybinding(keymap.scroll_right, Action::ScrollRight);
+        insert_keybinding(keymap.scroll_up, Action::ResultScrollUp);
+        insert_keybinding(keymap.scroll_down, Action::ResultScrollDown);
+        insert_keybinding(keymap.scroll_half_page_up, Action::ResultHalfPageUp);
+        insert_keybinding(keymap.scroll_half_page_down, Action::ResultHalfPageDown);
+        insert_keybinding(keymap.scroll_page_up, Action::ResultPageUp);
+        insert_keybinding(keymap.scroll_page_down, Action::ResultPageDown);
+        insert_keybinding(keymap.scroll_top_of_page, Action::TopOfPage);
+        insert_keybinding(keymap.scroll_bottom_of_page, Action::BottomOfPage);
+
         keybindings.insert(Mode::All, all_keybindings);
 
         let mut all_styles = HashMap::new();
@@ -701,5 +718,62 @@ mod tests {
         config.defaulting();
 
         assert_eq!(config.general.skip_empty_diffs, Some(true));
+    }
+
+    #[test]
+    fn test_old_config_keymap() {
+        let config_str = r#"
+[keymap]
+timemachine_go_to_past = "Down"
+timemachine_go_to_more_past = "Shift-Down"
+timemachine_go_to_future = "Up"
+timemachine_go_to_more_future = "Shift-Up"
+timemachine_go_to_now = "Ctrl-Shift-Up"
+timemachine_go_to_oldest = "Ctrl-Shift-Down"
+scroll_left = "h"
+scroll_right = "l"
+scroll_up = "k"
+scroll_down = "j"
+scroll_half_page_up = "Ctrl-u"
+scroll_half_page_down = "Ctrl-d"
+scroll_page_up = "Ctrl-b"
+scroll_page_down = "Ctrl-f"
+scroll_bottom_of_page = "Shift-g"
+scroll_top_of_page = "g g"
+"#;
+
+        let config = OldConfig::new_from_str(config_str).unwrap();
+        let mut config = Config::from(config);
+
+        config.defaulting();
+
+        let assert_action = |config: &Config, key: &str, action: Action| {
+            assert_eq!(
+                config
+                    .keybindings
+                    .get(&Mode::All)
+                    .unwrap()
+                    .get(&parse_key_sequence(key).unwrap_or_default())
+                    .unwrap(),
+                &action
+            );
+        };
+
+        assert_action(&config, "<Down>", Action::GoToPast);
+        assert_action(&config, "<Shift-Down>", Action::GoToMorePast);
+        assert_action(&config, "<Up>", Action::GoToFuture);
+        assert_action(&config, "<Shift-Up>", Action::GoToMoreFuture);
+        assert_action(&config, "<Ctrl-Shift-Up>", Action::GoToCurrent);
+        assert_action(&config, "<Ctrl-Shift-Down>", Action::GoToOldest);
+        assert_action(&config, "<h>", Action::ScrollLeft);
+        assert_action(&config, "<l>", Action::ScrollRight);
+        assert_action(&config, "<k>", Action::ResultScrollUp);
+        assert_action(&config, "<j>", Action::ResultScrollDown);
+        assert_action(&config, "<Ctrl-u>", Action::ResultHalfPageUp);
+        assert_action(&config, "<Ctrl-d>", Action::ResultHalfPageDown);
+        assert_action(&config, "<Ctrl-b>", Action::ResultPageUp);
+        assert_action(&config, "<Ctrl-f>", Action::ResultPageDown);
+        assert_action(&config, "<Shift-g>", Action::BottomOfPage);
+        assert_action(&config, "<g><g>", Action::TopOfPage);
     }
 }
