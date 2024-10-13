@@ -30,6 +30,16 @@ pub struct Keymap {
     pub timemachine_go_to_more_future: Option<String>,
     pub timemachine_go_to_now: Option<String>,
     pub timemachine_go_to_oldest: Option<String>,
+    pub scroll_left: Option<String>,
+    pub scroll_right: Option<String>,
+    pub scroll_up: Option<String>,
+    pub scroll_down: Option<String>,
+    pub scroll_half_page_up: Option<String>,
+    pub scroll_half_page_down: Option<String>,
+    pub scroll_page_up: Option<String>,
+    pub scroll_page_down: Option<String>,
+    pub scroll_bottom_of_page: Option<String>,
+    pub scroll_top_of_page: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]

@@ -149,6 +149,16 @@ timemachine_go_to_future = "Up"
 timemachine_go_to_more_future = "Shift-Up"
 timemachine_go_to_now = "Ctrl-Shift-Up"
 timemachine_go_to_oldest = "Ctrl-Shift-Down"
+scroll_left = "h"
+scroll_right = "l"
+scroll_up = "k"
+scroll_down = "j"
+scroll_half_page_up = "Ctrl-u"
+scroll_half_page_down = "Ctrl-d"
+scroll_page_up = "Ctrl-b"
+scroll_page_down = "Ctrl-f"
+scroll_bottom_of_page = "Shift-g"
+scroll_top_of_page = "g g"
 
 [color]
 background = "white" # Default value is inherit from terminal color.
