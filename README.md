@@ -51,7 +51,7 @@ brew install viddy
 ### Linux
 
 ```shell
-wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.2.0/viddy-v1.2.0-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
+wget -O viddy.tar.gz https://github.com/sachaos/viddy/releases/download/v1.2.1/viddy-v1.2.1-linux-x86_64.tar.gz && tar xvf viddy.tar.gz && mv viddy /usr/local/bin
 ```
 
 ### Other
