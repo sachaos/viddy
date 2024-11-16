@@ -29,7 +29,6 @@ use cli::Cli;
 use color_eyre::eyre::{eyre, Result};
 use directories::ProjectDirs;
 use store::Store;
-use tempdir::TempDir;
 
 use crate::{
     app::App,
@@ -64,7 +63,7 @@ async fn tokio_main() -> Result<()> {
         let mut app = App::new(args.clone(), store, false)?;
         app.run().await?;
     } else {
-        let tmp_dir = TempDir::new("viddy")?;
+        let tmp_dir = tempfile::tempdir()?;
         let tmp_path = tmp_dir.into_path();
         let file_path = tmp_path.join("backup.sqlite");
         let store = store::sqlite::SQLiteStore::new(file_path.clone(), true)?;
