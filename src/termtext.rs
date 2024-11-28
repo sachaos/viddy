@@ -124,7 +124,7 @@ impl Converter {
         self.style = self.original_style;
     }
 
-    pub fn convert(&mut self, text: &Vec<u8>) -> Text {
+    pub fn convert(&mut self, text: &[u8]) -> Text {
         let mut statemachine = Parser::<DefaultCharAccumulator>::new();
         let mut performer = Converter::new(self.style);
 
@@ -180,7 +180,7 @@ impl Perform for Converter {
             return;
         }
 
-        let is_sgr = byte == b'm' && intermediates.first().is_none();
+        let is_sgr = byte == b'm' && intermediates.is_empty();
         let style = if is_sgr {
             if params.is_empty() {
                 self.reset_style();
