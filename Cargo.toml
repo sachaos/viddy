@@ -12,44 +12,44 @@ build = "build.rs"
 
 [dependencies]
 ansi-parser = "0.9.1"
-ansi-to-tui = "4.0.1"
-anstyle = "1.0.7"
-anstyle-parse = { version = "0.2.4", features = ["utf8"] }
+ansi-to-tui = "4.1.0"
+anstyle = "1.0.10"
+anstyle-parse = { version = "0.2.6", features = ["utf8"] }
 better-panic = "0.3.0"
 chrono = "0.4.38"
-clap = { version = "4.5.7", features = ["derive", "cargo", "wrap_help", "unicode", "string", "unstable-styles"] }
+clap = { version = "4.5.21", features = ["derive", "cargo", "wrap_help", "unicode", "string", "unstable-styles"] }
 color-eyre = "0.6.3"
-config = "0.14.0"
+config = "0.14.1"
 crossterm = { version = "0.27.0", features = ["serde", "event-stream"] }
 derive_deref = "1.1.1"
 directories = "5.0.1"
 dissimilar = "1.0.9"
-futures = "0.3.30"
-human-panic = "2.0.1"
+futures = "0.3.31"
+human-panic = "2.0.2"
 humantime = "2.1.0"
 json5 = "0.4.1"
-libc = "0.2.155"
-log = "0.4.21"
-pretty_assertions = "1.4.0"
+libc = "0.2.166"
+log = "0.4.22"
+pretty_assertions = "1.4.1"
 ratatui = { version = "0.26.3", features = ["serde", "macros"] }
 rusqlite = { version = "0.32.1", features = ["bundled", "chrono"] }
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.117"
-serde_with = { version = "3.8.1", features = ["chrono_0_4"] }
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
+serde_with = { version = "3.11.0", features = ["chrono_0_4"] }
 signal-hook = "0.3.17"
-similar = "2.5.0"
+similar = "2.6.0"
 strip-ansi-escapes = "0.2.0"
-strum = { version = "0.26.2", features = ["derive"] }
-tempfile = "3.12.0"
-tokio = { version = "1.38.0", features = ["full"] }
-tokio-util = "0.7.11"
+strum = { version = "0.26.3", features = ["derive"] }
+tempfile = "3.14.0"
+tokio = { version = "1.41.1", features = ["full"] }
+tokio-util = "0.7.12"
 toml = "0.8.19"
-tracing = "0.1.40"
+tracing = "0.1.41"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "serde"] }
 tui-input = "0.9.0"
 tui-widget-list = "0.9.0"
-unicode-width = "0.1.13"
+unicode-width = "0.1.14"
 
 [build-dependencies]
-vergen = { version = "8.3.1", features = [ "build", "git", "gitoxide", "cargo" ]}
+vergen = { version = "8.3.2", features = [ "build", "git", "gitoxide", "cargo" ]}
