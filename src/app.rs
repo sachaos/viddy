@@ -52,6 +52,7 @@ pub struct App<S: Store> {
     shell: Option<(String, Vec<String>)>,
     store: S,
     read_only: bool,
+    disable_mouse: bool,
 }
 
 impl<S: Store> App<S> {
@@ -134,8 +135,8 @@ impl<S: Store> App<S> {
             components.push(Box::new(FpsCounter::new()));
         }
 
-        let default_skip_empty_diffs = config.general.skip_empty_diffs.unwrap_or_default();
-        let is_skip_empty_diffs = cli.is_skip_empty_diffs || default_skip_empty_diffs;
+        let is_skip_empty_diffs = cli.is_skip_empty_diffs || config.general.skip_empty_diffs.unwrap_or_default();
+        let disable_mouse = cli.disable_mouse || config.general.disable_mouse.unwrap_or_default();
 
         Ok(Self {
             store,
@@ -160,6 +161,7 @@ impl<S: Store> App<S> {
             showing_execution_id: None,
             diff_mode,
             shell,
+            disable_mouse,
         })
     }
 
@@ -211,7 +213,7 @@ impl<S: Store> App<S> {
         let mut tui = tui::Tui::new()?
             .tick_rate(self.tick_rate)
             .frame_rate(self.frame_rate);
-        tui = tui.mouse(true);
+        tui = tui.mouse(!self.disable_mouse);
         tui.enter()?;
 
         for component in self.components.iter_mut() {

@@ -114,6 +114,12 @@ pub struct Cli {
     pub disable_auto_save: bool,
 
     #[arg(
+        long = "disable_mouse",
+        help = "Stop handling mouse events",
+    )]
+    pub disable_mouse: bool,
+
+    #[arg(
         long = "load",
         alias = "lookback",
         value_name = "FILE",

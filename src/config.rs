@@ -44,6 +44,8 @@ pub struct General {
     pub shell_options: Option<String>,
     #[serde(default)]
     pub skip_empty_diffs: Option<bool>,
+    #[serde(default)]
+    pub disable_mouse: Option<bool>,
 }
 
 impl From<OldGeneral> for General {
@@ -53,6 +55,7 @@ impl From<OldGeneral> for General {
             shell: value.shell,
             shell_options: value.shell_options,
             skip_empty_diffs: value.skip_empty_diffs,
+            disable_mouse: value.disable_mouse,
         }
     }
 }
@@ -160,6 +163,9 @@ impl Config {
         }
         if self.general.skip_empty_diffs.is_none() {
             self.general.skip_empty_diffs = default_config.general.skip_empty_diffs;
+        }
+        if self.general.disable_mouse.is_none() {
+            self.general.disable_mouse = default_config.general.disable_mouse;
         }
     }
 
