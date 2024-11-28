@@ -135,7 +135,8 @@ impl<S: Store> App<S> {
             components.push(Box::new(FpsCounter::new()));
         }
 
-        let is_skip_empty_diffs = cli.is_skip_empty_diffs || config.general.skip_empty_diffs.unwrap_or_default();
+        let is_skip_empty_diffs =
+            cli.is_skip_empty_diffs || config.general.skip_empty_diffs.unwrap_or_default();
         let disable_mouse = cli.disable_mouse || config.general.disable_mouse.unwrap_or_default();
 
         Ok(Self {
