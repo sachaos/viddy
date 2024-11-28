@@ -19,6 +19,7 @@ pub struct General {
     pub shell: Option<String>,
     pub shell_options: Option<String>,
     pub skip_empty_diffs: Option<bool>,
+    pub disable_mouse: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -80,8 +81,11 @@ background = "white"
         let config_str = r#"
 [general]
 skip_empty_diffs = true
+disable_mouse = true
 "#;
         let config = super::OldConfig::new_from_str(config_str).unwrap();
-        assert_eq!(config.general.unwrap().skip_empty_diffs, Some(true));
+        let general = config.general.unwrap();
+        assert_eq!(general.skip_empty_diffs, Some(true));
+        assert_eq!(general.disable_mouse, Some(true));
     }
 }

@@ -141,6 +141,7 @@ no_shell = false
 shell = "zsh"
 shell_options = ""
 skip_empty_diffs = false
+disable_mouse = true
 
 [keymap]
 timemachine_go_to_past = "Down"
