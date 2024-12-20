@@ -123,6 +123,12 @@ impl Component for Home {
             Action::SetTimemachineMode(timemachine_mode) => {
                 self.set_timemachine_mode(timemachine_mode)
             }
+            Action::IncreaseInterval => {
+                self.interval_component.increase_interval();
+            }
+            Action::DecreaseInterval => {
+                self.interval_component.decrease_interval();
+            }
             Action::SetNoTitle(is_no_title) => self.is_no_title = is_no_title,
             _ => {}
         }

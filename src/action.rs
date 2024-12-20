@@ -80,4 +80,6 @@ pub enum Action {
     UpdateLatestHistoryCount,
     ShowHelp,
     ExitHelp,
+    IncreaseInterval,
+    DecreaseInterval,
 }
