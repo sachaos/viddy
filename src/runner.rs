@@ -86,7 +86,12 @@ pub async fn run_executor<S: Store>(
             eprintln!("Failed to send result: {:?}", e);
         }
 
-        tokio::time::sleep(runtime_config.interval.to_std().unwrap()).await;
+        let interval = store
+            .get_runtime_config()?
+            .map(|config| config.interval)
+            .unwrap_or(runtime_config.interval.num_milliseconds() as u64);
+
+        tokio::time::sleep(std::time::Duration::from_millis(interval)).await;
     }
 }
 
@@ -160,9 +165,19 @@ pub async fn run_executor_precise<S: Store>(
         }
 
         let elapased = chrono::Local::now().signed_duration_since(start_time);
-        let sleep_time = runtime_config.interval.sub(elapased);
-        if let Ok(sleep_time) = sleep_time.to_std() {
-            tokio::time::sleep(sleep_time).await;
+
+        let interval = store
+            .get_runtime_config()?
+            .map(|config| config.interval)
+            .unwrap_or(runtime_config.interval.num_milliseconds() as u64);
+
+        let interval = std::time::Duration::from_millis(interval);
+
+        if let Ok(elapsed_std) = elapased.to_std() {
+            if elapsed_std < interval {
+                let sleep_time = interval - elapsed_std;
+                tokio::time::sleep(sleep_time).await;
+            }
         }
     }
 }

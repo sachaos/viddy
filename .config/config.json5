@@ -38,6 +38,8 @@
       "</>": "EnterSearchMode",
       "<t>": "SwitchNoTitle",
       "<?>": "ShowHelp",
+      "<+>": "IncreaseInterval",
+      "<->": "DecreaseInterval",
     },
     "Search": {
       "<Ctrl-d>": "Quit", // Another way to quit

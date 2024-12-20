@@ -218,6 +218,8 @@ impl From<OldConfig> for Config {
         insert_keybinding(keymap.scroll_page_down, Action::ResultPageDown);
         insert_keybinding(keymap.scroll_top_of_page, Action::TopOfPage);
         insert_keybinding(keymap.scroll_bottom_of_page, Action::BottomOfPage);
+        insert_keybinding(keymap.increase_interval, Action::IncreaseInterval);
+        insert_keybinding(keymap.decrease_interval, Action::DecreaseInterval);
 
         keybindings.insert(Mode::All, all_keybindings);
 

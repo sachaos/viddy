@@ -34,6 +34,6 @@ pub struct Record {
 
 #[derive(Debug, Clone, Default)]
 pub struct RuntimeConfig {
-    pub interval: String,
+    pub interval: u64,
     pub command: String,
 }

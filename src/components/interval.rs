@@ -26,6 +26,18 @@ impl Interval {
             config: Config::new().unwrap(),
         }
     }
+
+    pub fn increase_interval(&mut self) {
+        self.runtime_config.interval += chrono::Duration::milliseconds(500);
+    }
+
+    pub fn decrease_interval(&mut self) {
+        let new_interval = self.runtime_config.interval - chrono::Duration::milliseconds(500);
+
+        if new_interval >= chrono::Duration::milliseconds(500) {
+            self.runtime_config.interval = new_interval;
+        }
+    }
 }
 
 impl Component for Interval {
