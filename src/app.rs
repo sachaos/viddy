@@ -61,9 +61,7 @@ impl<S: Store> App<S> {
             let store_runtime_config = store.get_runtime_config()?.unwrap_or_default();
 
             RuntimeConfig {
-                interval: Duration::from_std(humantime::parse_duration(
-                    &store_runtime_config.interval,
-                )?)?,
+                interval: Duration::milliseconds(store_runtime_config.interval as i64),
                 command: store_runtime_config
                     .command
                     .split(' ')
@@ -76,10 +74,12 @@ impl<S: Store> App<S> {
                 command: cli.command.clone(),
             };
 
-            let interval =
-                humantime::format_duration(cli.interval.to_std().unwrap_or_default()).to_string();
+            let interval = cli.interval.to_std().unwrap_or_default();
             let command = cli.command.join(" ");
-            store.set_runtime_config(StoreRuntimeConfig { interval, command })?;
+            store.set_runtime_config(StoreRuntimeConfig {
+                interval: interval.as_millis() as u64,
+                command,
+            })?;
 
             runtime_config
         };
@@ -283,6 +283,29 @@ impl<S: Store> App<S> {
                         self.last_tick_key_events.drain(..);
                     }
                     Action::Quit => self.should_quit = true,
+                    Action::IncreaseInterval => {
+                        self.runtime_config.interval +=
+                            Duration::milliseconds(self.config.general.interval_step_ms);
+
+                        self.store.set_runtime_config(StoreRuntimeConfig {
+                            interval: self.runtime_config.interval.num_milliseconds() as u64,
+                            command: self.runtime_config.command.join(" "),
+                        })?;
+                    }
+                    Action::DecreaseInterval => {
+                        let min_interval =
+                            Duration::milliseconds(self.config.general.min_interval_ms);
+                        let step = Duration::milliseconds(self.config.general.interval_step_ms);
+
+                        let new_interval = (self.runtime_config.interval - step).max(min_interval);
+
+                        self.runtime_config.interval = new_interval;
+
+                        self.store.set_runtime_config(StoreRuntimeConfig {
+                            interval: new_interval.num_milliseconds() as u64,
+                            command: self.runtime_config.command.join(" "),
+                        })?;
+                    }
                     Action::Suspend => self.should_suspend = true,
                     Action::Resume => self.should_suspend = false,
                     Action::Resize(w, h) => {

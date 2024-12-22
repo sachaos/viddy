@@ -41,6 +41,8 @@ pub struct Keymap {
     pub scroll_page_down: Option<String>,
     pub scroll_bottom_of_page: Option<String>,
     pub scroll_top_of_page: Option<String>,
+    pub increase_interval: Option<String>,
+    pub decrease_interval: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]

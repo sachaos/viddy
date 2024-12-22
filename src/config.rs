@@ -46,6 +46,10 @@ pub struct General {
     pub skip_empty_diffs: Option<bool>,
     #[serde(default)]
     pub disable_mouse: Option<bool>,
+    #[serde(default)]
+    pub min_interval_ms: i64,
+    #[serde(default)]
+    pub interval_step_ms: i64,
 }
 
 impl From<OldGeneral> for General {
@@ -56,6 +60,7 @@ impl From<OldGeneral> for General {
             shell_options: value.shell_options,
             skip_empty_diffs: value.skip_empty_diffs,
             disable_mouse: value.disable_mouse,
+            ..Default::default()
         }
     }
 }
@@ -167,6 +172,12 @@ impl Config {
         if self.general.disable_mouse.is_none() {
             self.general.disable_mouse = default_config.general.disable_mouse;
         }
+        if self.general.min_interval_ms == 0 {
+            self.general.min_interval_ms = default_config.general.min_interval_ms;
+        }
+        if self.general.interval_step_ms == 0 {
+            self.general.interval_step_ms = default_config.general.interval_step_ms;
+        }
     }
 
     pub fn get_style(&self, style: &str) -> Style {
@@ -218,6 +229,8 @@ impl From<OldConfig> for Config {
         insert_keybinding(keymap.scroll_page_down, Action::ResultPageDown);
         insert_keybinding(keymap.scroll_top_of_page, Action::TopOfPage);
         insert_keybinding(keymap.scroll_bottom_of_page, Action::BottomOfPage);
+        insert_keybinding(keymap.increase_interval, Action::IncreaseInterval);
+        insert_keybinding(keymap.decrease_interval, Action::DecreaseInterval);
 
         keybindings.insert(Mode::All, all_keybindings);
 

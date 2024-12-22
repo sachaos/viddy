@@ -1,5 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
+use chrono::Duration as ChronoDuration;
 use color_eyre::eyre::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{prelude::*, widgets::*};
@@ -25,6 +26,18 @@ impl Interval {
             command_tx: None,
             config: Config::new().unwrap(),
         }
+    }
+
+    pub fn increase_interval(&mut self) {
+        self.runtime_config.interval +=
+            chrono::Duration::milliseconds(self.config.general.interval_step_ms);
+    }
+
+    pub fn decrease_interval(&mut self) {
+        let min_interval = ChronoDuration::milliseconds(self.config.general.min_interval_ms);
+        let step = ChronoDuration::milliseconds(self.config.general.interval_step_ms);
+        let new_interval = (self.runtime_config.interval - step).max(min_interval);
+        self.runtime_config.interval = new_interval;
     }
 }
 
