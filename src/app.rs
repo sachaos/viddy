@@ -284,7 +284,8 @@ impl<S: Store> App<S> {
                     }
                     Action::Quit => self.should_quit = true,
                     Action::IncreaseInterval => {
-                        self.runtime_config.interval += Duration::milliseconds(500);
+                        self.runtime_config.interval +=
+                            Duration::milliseconds(self.config.general.interval_step_ms);
 
                         self.store.set_runtime_config(StoreRuntimeConfig {
                             interval: self.runtime_config.interval.num_milliseconds() as u64,
@@ -292,17 +293,18 @@ impl<S: Store> App<S> {
                         })?;
                     }
                     Action::DecreaseInterval => {
-                        let new_interval =
-                            self.runtime_config.interval - Duration::milliseconds(500);
+                        let min_interval =
+                            Duration::milliseconds(self.config.general.min_interval_ms);
+                        let step = Duration::milliseconds(self.config.general.interval_step_ms);
 
-                        if new_interval >= chrono::Duration::milliseconds(500) {
-                            self.runtime_config.interval = new_interval;
+                        let new_interval = (self.runtime_config.interval - step).max(min_interval);
 
-                            self.store.set_runtime_config(StoreRuntimeConfig {
-                                interval: self.runtime_config.interval.num_milliseconds() as u64,
-                                command: self.runtime_config.command.join(" "),
-                            })?;
-                        }
+                        self.runtime_config.interval = new_interval;
+
+                        self.store.set_runtime_config(StoreRuntimeConfig {
+                            interval: new_interval.num_milliseconds() as u64,
+                            command: self.runtime_config.command.join(" "),
+                        })?;
                     }
                     Action::Suspend => self.should_suspend = true,
                     Action::Resume => self.should_suspend = false,

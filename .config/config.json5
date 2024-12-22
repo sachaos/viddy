@@ -70,5 +70,9 @@
       "search_highlight": "black on yellow",
       "readonly": "bold yellow"
     }
+  },
+  "general": {
+    "min_interval_ms": 500,
+    "interval_step_ms": 500
   }
 }
