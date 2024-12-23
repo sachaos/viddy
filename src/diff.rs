@@ -3,12 +3,12 @@ use similar::{ChangeTag, TextDiff};
 
 use crate::termtext::Text;
 
-pub fn diff_and_mark(current: &str, pervious: &str, text: &mut Text) {
+pub fn diff_and_mark(current: &str, previous: &str, text: &mut Text) {
     let style = anstyle::Style::new()
         .fg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Black)))
         .bg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Green)));
 
-    let chunks = diff(pervious, current);
+    let chunks = diff(previous, current);
 
     let mut cursor = 0;
     for chunk in chunks.into_iter() {
@@ -30,12 +30,12 @@ pub fn diff_and_mark(current: &str, pervious: &str, text: &mut Text) {
     }
 }
 
-pub fn diff_and_mark_delete(current: &str, pervious: &str, text: &mut Text) {
+pub fn diff_and_mark_delete(current: &str, previous: &str, text: &mut Text) {
     let style = anstyle::Style::new()
         .fg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Black)))
         .bg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Red)));
 
-    let chunks = diff(pervious, current);
+    let chunks = diff(previous, current);
 
     let mut cursor = 0;
     for chunk in chunks {
@@ -66,13 +66,13 @@ mod test {
     #[test]
     fn test_diff_and_mark() {
         let current = "hello world!";
-        let pervious = "hello world";
+        let previous = "hello world";
         let mut text = Text::new(current);
         let style = anstyle::Style::new()
             .fg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Black)))
             .bg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Green)));
 
-        super::diff_and_mark(current, pervious, &mut text);
+        super::diff_and_mark(current, previous, &mut text);
 
         assert_eq!(text[10].style, Style::new());
         assert_eq!(text[11].style, style);
@@ -80,14 +80,14 @@ mod test {
 
     #[test]
     fn test_diff_and_mark_new_line() {
-        let pervious = "hello world";
+        let previous = "hello world";
         let current = "hello world\nnew world";
         let mut text = Text::new(current);
         let style = anstyle::Style::new()
             .fg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Black)))
             .bg_color(Some(anstyle::Color::Ansi(anstyle::AnsiColor::Green)));
 
-        super::diff_and_mark(current, pervious, &mut text);
+        super::diff_and_mark(current, previous, &mut text);
 
         assert_eq!(text[11].style, Style::new());
         for i in 12..=14 {
