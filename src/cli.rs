@@ -52,6 +52,9 @@ pub struct Cli {
     #[arg(short = 't', long = "no-title", help = "Turn off header")]
     pub is_no_title: bool,
 
+    #[arg(short = 'S', long = "no-status", help = "Turn off status bar")]
+    pub is_no_status: bool,
+
     #[arg(
         short = 'w',
         long = "unfold",
