@@ -47,6 +47,7 @@ pub struct App<S: Store> {
     is_bell: bool,
     is_fold: bool,
     is_no_title: bool,
+    is_no_status: bool,
     is_skip_empty_diffs: bool,
     showing_execution_id: Option<ExecutionId>,
     shell: Option<(String, Vec<String>)>,
@@ -127,6 +128,7 @@ impl<S: Store> App<S> {
             diff_mode,
             cli.is_bell,
             cli.is_no_title,
+            cli.is_no_status,
             read_only,
             timemachine_mode,
         );
@@ -157,6 +159,7 @@ impl<S: Store> App<S> {
             is_bell: cli.is_bell,
             is_fold: !cli.is_unfold,
             is_no_title: cli.is_no_title,
+            is_no_status: cli.is_no_status,
             is_suspend: Arc::new(Mutex::new(false)),
             is_skip_empty_diffs,
             showing_execution_id: None,

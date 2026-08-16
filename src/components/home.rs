@@ -24,6 +24,7 @@ pub struct Home {
     config: Config,
     runtime_config: RuntimeConfig,
     is_no_title: bool,
+    is_no_status: bool,
 
     mode: Mode,
     command_component: Command,
@@ -46,6 +47,7 @@ impl Home {
         diff_mode: Option<DiffMode>,
         is_bell: bool,
         is_no_title: bool,
+        is_no_status: bool,
         read_only: bool,
         timemachine_mode: bool,
     ) -> Self {
@@ -54,6 +56,7 @@ impl Home {
             command_tx: None,
             config: config.clone(),
             is_no_title,
+            is_no_status,
             mode: Default::default(),
             command_component: Command::new(runtime_config.clone()),
             interval_component: Interval::new(runtime_config.clone()),
@@ -188,7 +191,9 @@ impl Component for Home {
         let [prompt, status] =
             Layout::horizontal([Constraint::Fill(100), Constraint::Length(32)]).areas(footer);
         self.prompt_component.draw(f, prompt)?;
-        self.status_component.draw(f, status)?;
+        if !self.is_no_status {
+            self.status_component.draw(f, status)?;
+        }
 
         Ok(())
     }
