@@ -107,13 +107,13 @@ pub struct Cli {
     pub save: Option<PathBuf>,
 
     #[arg(
-        long = "disable_auto_save",
+        long = "disable-auto-save",
         help = "Disable to save automatically",
         conflicts_with_all = ["save", "load"]
     )]
     pub disable_auto_save: bool,
 
-    #[arg(long = "disable_mouse", help = "Stop handling mouse events")]
+    #[arg(long = "disable-mouse", help = "Stop handling mouse events")]
     pub disable_mouse: bool,
 
     #[arg(
