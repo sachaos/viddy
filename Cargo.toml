@@ -46,7 +46,7 @@ tokio-util = "0.7.12"
 toml = "0.8.19"
 tracing = "0.1.41"
 tracing-error = "0.2.0"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "serde"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "serde"] }
 tui-input = "0.9.0"
 tui-widget-list = "0.9.0"
 unicode-width = "0.1.14"
