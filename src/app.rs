@@ -527,7 +527,7 @@ impl<S: Store> App<S> {
                 tui = tui::Tui::new()?
                     .tick_rate(self.tick_rate)
                     .frame_rate(self.frame_rate);
-                tui = tui.mouse(true);
+                tui = tui.mouse(!self.disable_mouse);
                 tui.enter()?;
             } else if self.should_quit {
                 tui.stop()?;
