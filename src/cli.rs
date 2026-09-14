@@ -139,9 +139,54 @@ fn parse_duration_from_str(s: &str) -> Result<Duration> {
     match humantime::parse_duration(s) {
         Ok(d) => Ok(Duration::from_std(d)?),
         Err(_) => {
-            // If the input is only a number, we assume it's in seconds
-            let n = s.parse::<f64>()?;
+            // Bare number, or float with a seconds suffix the older Go CLI accepted
+            // (e.g. "1.8" / "1.8s"). humantime >= 2.2 parses "1.8s" itself; keep
+            // this fallback for bare floats and for resilience.
+            let normalized = s
+                .strip_suffix("seconds")
+                .or_else(|| s.strip_suffix("second"))
+                .or_else(|| s.strip_suffix("secs"))
+                .or_else(|| s.strip_suffix("sec"))
+                .or_else(|| s.strip_suffix('s'))
+                .unwrap_or(s);
+            let n = normalized.parse::<f64>().map_err(|_| {
+                eyre!("invalid duration {s:?}: expected a humantime value or seconds float")
+            })?;
             Ok(Duration::milliseconds((n * 1000.0) as i64))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_float_seconds_with_suffix() {
+        let d = parse_duration_from_str("1.8s").unwrap();
+        assert_eq!(d, Duration::milliseconds(1800));
+    }
+
+    #[test]
+    fn parses_bare_float_seconds() {
+        let d = parse_duration_from_str("1.8").unwrap();
+        assert_eq!(d, Duration::milliseconds(1800));
+    }
+
+    #[test]
+    fn parses_integer_humantime() {
+        let d = parse_duration_from_str("2s").unwrap();
+        assert_eq!(d, Duration::seconds(2));
+    }
+
+    #[test]
+    fn validate_rejects_too_short() {
+        assert!(validate_duration("50ms").is_err());
+    }
+
+    #[test]
+    fn validate_accepts_float_seconds_suffix() {
+        let d = validate_duration("1.8s").unwrap();
+        assert_eq!(d, Duration::milliseconds(1800));
     }
 }
