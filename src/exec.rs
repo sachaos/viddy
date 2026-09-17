@@ -1,3 +1,5 @@
+use std::process::Stdio;
+
 use color_eyre::eyre::{OptionExt, Result};
 use tokio::process::Command;
 
@@ -12,6 +14,7 @@ pub async fn exec(
     command.env("COLUMNS", width.to_string());
     command.env("LINES", height.to_string());
     command.args(args);
+    command.stdin(Stdio::null());
     let result = command.output().await?;
 
     Ok((
