@@ -4,7 +4,6 @@ use color_eyre::eyre::Result;
 use directories::{BaseDirs, ProjectDirs};
 use human_panic::Metadata;
 use ratatui::layout::Rect;
-use tracing::error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{
     self, prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, Layer,
@@ -49,24 +48,39 @@ pub fn initialize_panic_handler() -> Result<()> {
         .into_hooks();
     eyre_hook.install()?;
     std::panic::set_hook(Box::new(move |panic_info| {
-        if let Ok(mut t) = crate::tui::Tui::new() {
-            if let Err(r) = t.exit() {
-                error!("Unable to exit Terminal: {:?}", r);
-            }
+        // Restore the terminal state inline instead of constructing a
+        // `Tui`: `Tui::new()` spawns a tokio task, which panics when no
+        // runtime is running (e.g. a panic on a non-tokio thread), and any
+        // panic inside a panic hook aborts the process.
+        if crossterm::terminal::is_raw_mode_enabled().unwrap_or(false) {
+            let _ = crossterm::execute!(
+                std::io::stdout(),
+                crossterm::event::DisableBracketedPaste,
+                crossterm::event::DisableMouseCapture,
+                crossterm::terminal::LeaveAlternateScreen,
+                crossterm::cursor::Show
+            );
+            let _ = crossterm::terminal::disable_raw_mode();
         }
 
         #[cfg(not(debug_assertions))]
         {
             use human_panic::{handle_dump, print_msg, Metadata};
+            use std::io::Write as _;
             let meta = Metadata::new(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"))
                 .authors(env!("CARGO_PKG_AUTHORS").replace(':', ", "))
                 .homepage(env!("CARGO_PKG_HOMEPAGE"));
 
             let file_path = handle_dump(&meta, panic_info);
+            // The rest of this hook must stay infallible for the same reason
+            // as above: a panic inside a panic hook aborts the process, so a
+            // broken stderr must not take the reporting path down with it.
             // prints human-panic message
-            print_msg(file_path, &meta)
-                .expect("human-panic: printing error message to console failed");
-            eprintln!("{}", panic_hook.panic_report(panic_info)); // prints color-eyre stack trace to stderr
+            let _ = print_msg(file_path, &meta);
+            // prints color-eyre stack trace to stderr (eprintln! would panic
+            // on a closed stderr)
+            let _ = std::io::stderr()
+                .write_all(format!("{}\n", panic_hook.panic_report(panic_info)).as_bytes());
         }
         let msg = format!("{}", panic_hook.panic_report(panic_info));
         log::error!("Error: {}", strip_ansi_escapes::strip_str(msg));
