@@ -244,6 +244,10 @@ impl DerefMut for Tui {
 
 impl Drop for Tui {
     fn drop(&mut self) {
-        self.exit().unwrap();
+        // `exit()` may fail when the terminal is already unusable (e.g.
+        // stdout was closed) or when `enter()` never succeeded. Dropping
+        // must be infallible: panicking here during unwinding — or inside
+        // the panic hook — aborts the process outright.
+        let _ = self.exit();
     }
 }
