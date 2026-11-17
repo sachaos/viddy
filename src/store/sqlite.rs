@@ -90,7 +90,7 @@ impl Store for SQLiteStore {
             )?;
             Ok(())
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 
@@ -120,7 +120,7 @@ impl Store for SQLiteStore {
                 Err(e) => Err(e.into()),
             }
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 
@@ -138,7 +138,7 @@ impl Store for SQLiteStore {
                 Err(e) => Err(e.into()),
             }
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 
@@ -166,7 +166,7 @@ impl Store for SQLiteStore {
                 .collect::<rusqlite::Result<Vec<Record>>>()?;
             Ok(records)
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 
@@ -189,7 +189,7 @@ impl Store for SQLiteStore {
                 Err(e) => Err(e.into()),
             }
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 
@@ -201,7 +201,7 @@ impl Store for SQLiteStore {
             )?;
             Ok(())
         } else {
-            color_eyre::eyre::bail!("Failed to get connection")
+            color_eyre::eyre::bail!("Failed to get connection");
         }
     }
 }
