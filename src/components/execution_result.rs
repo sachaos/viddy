@@ -174,6 +174,9 @@ impl Component for ExecutionResult {
 
     fn draw(&mut self, f: &mut Frame<'_>, area: Rect) -> Result<()> {
         self.rect = area;
+        if area.is_empty() {
+            return Ok(());
+        }
 
         let text = self.result.clone().unwrap_or(Text::new(""));
         let mut current = text.to_string();
@@ -357,6 +360,25 @@ use color_eyre::eyre::Result;
             result.to_string(),
             "iあいうえ\nおかきくけ\nこさしすせ\nそたちつて\nとなにぬね\nの"
         )
+    }
+
+    #[test]
+    fn test_draw_tiny_areas() {
+        let mut terminal =
+            ratatui::Terminal::new(ratatui::backend::TestBackend::new(4, 4)).unwrap();
+        for fold in [false, true] {
+            let mut result = ExecutionResult::new(fold);
+            result.set_result(Some(Text::new("long line\nanother line\nthird line")));
+            result.x_state = ScrollbarState::new(10);
+            result.y_state = ScrollbarState::new(10);
+            for (width, height) in [(0, 0), (0, 4), (4, 0), (1, 1), (1, 2), (2, 1)] {
+                terminal
+                    .draw(|frame| {
+                        result.draw(frame, Rect::new(0, 0, width, height)).unwrap();
+                    })
+                    .unwrap();
+            }
+        }
     }
 
     #[test]
