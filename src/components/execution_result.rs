@@ -365,11 +365,13 @@ use color_eyre::eyre::Result;
     #[test]
     fn test_draw_tiny_areas() {
         let mut terminal =
-            ratatui::Terminal::new(ratatui::backend::TestBackend::new(2, 2)).unwrap();
+            ratatui::Terminal::new(ratatui::backend::TestBackend::new(4, 4)).unwrap();
         for fold in [false, true] {
             let mut result = ExecutionResult::new(fold);
             result.set_result(Some(Text::new("long line\nanother line\nthird line")));
-            for (width, height) in [(0, 0), (0, 2), (2, 0), (1, 1), (1, 2), (2, 1)] {
+            result.x_state = ScrollbarState::new(10);
+            result.y_state = ScrollbarState::new(10);
+            for (width, height) in [(0, 0), (0, 4), (4, 0), (1, 1), (1, 2), (2, 1)] {
                 terminal
                     .draw(|frame| {
                         result.draw(frame, Rect::new(0, 0, width, height)).unwrap();
